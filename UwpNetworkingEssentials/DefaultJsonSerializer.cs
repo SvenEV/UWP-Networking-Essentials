@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 
@@ -46,62 +47,27 @@ namespace UwpNetworkingEssentials
         {
             await reader.LoadAsync(sizeof(uint));
             var totalLength = reader.ReadUInt32();
-            var jsonLength = totalLength;
             await reader.LoadAsync(totalLength);
 
-            var typeNameLength = reader.ReadUInt32();
-            var typeName = reader.ReadString(typeNameLength);
-            var type = LookupType(typeName);
+            var json = reader.ReadString(totalLength);
+            var message = JsonConvert.DeserializeObject<Message>(json);
 
-            jsonLength -= 2 * sizeof(uint) + typeNameLength;
+            var type = LookupType(message.TypeName);
+            var genericParams = message.GenericTypeParameters.Select(LookupType).ToArray();
+            var finalType = genericParams.Length == 0 ? type : type.MakeGenericType(genericParams);
 
-            // Read generic type parameters
-            var genericArgsCount = reader.ReadUInt32();
-            var typeArgs = new Type[genericArgsCount];
-
-            for (var i = 0; i < genericArgsCount; i++)
-            {
-                var typeParamNameLength = reader.ReadUInt32();
-                var typeParamName = reader.ReadString(typeParamNameLength);
-                typeArgs[i] = LookupType(typeParamName);
-                jsonLength -= sizeof(uint) + typeParamNameLength;
-            }
-
-            // Construct final type
-            var finalType = (genericArgsCount == 0) ? type :
-                type.MakeGenericType(typeArgs);
-
-            // Read JSON and deserialize
-            var json = reader.ReadString(jsonLength);
-            var o = JsonConvert.DeserializeObject(json, finalType);
-            return o;
+            var value = JsonConvert.DeserializeObject(message.Value, finalType);
+            return value;
         }
 
         public async Task SerializeAsync(object o, DataWriter writer)
         {
-            var json = JsonConvert.SerializeObject(o);
+            var json = JsonConvert.SerializeObject(new Message(o));
 
-            var typeName = o.GetType().FullName;
-            var typeArgs = o.GetType().GenericTypeArguments.Select(t => t.FullName).ToArray();
-
-            var totalLength =
-                sizeof(uint) + typeName.Length + // Type name and its length
-                sizeof(uint) + typeArgs.Length * sizeof(uint) + typeArgs.Sum(t => t.Length) + // Generic args
-                json.Length;
-
-            writer.WriteUInt32((uint)totalLength);
-            writer.WriteUInt32((uint)typeName.Length);
-            writer.WriteString(typeName);
-            writer.WriteUInt32((uint)typeArgs.Length);
-
-            foreach (var t in typeArgs)
-            {
-                writer.WriteUInt32((uint)t.Length);
-                writer.WriteString(t);
-            }
-
-            writer.WriteString(json);
-
+            var bytes = Encoding.UTF8.GetBytes(json);
+            writer.WriteUInt32((uint)bytes.Length);
+            writer.WriteBytes(bytes);
+            
             await writer.StoreAsync();
         }
 
@@ -113,6 +79,25 @@ namespace UwpNetworkingEssentials
                 return type;
             else
                 throw new ArgumentException($"The type '{name}' could not be found");
+        }
+
+        class Message
+        {
+            public string TypeName { get; set; }
+            public string[] GenericTypeParameters { get; set; }
+            public string Value { get; set; }
+
+            public Message()
+            {
+            }
+
+            public Message(object value)
+            {
+                Value = JsonConvert.SerializeObject(value);
+                TypeName = value.GetType().FullName;
+                GenericTypeParameters = value.GetType().GenericTypeArguments
+                    .Select(t => t.FullName).ToArray();
+            }
         }
     }
 }
