@@ -30,7 +30,7 @@ namespace UwpNetworkingEssentials
         /// <param name="jsonSettings">
         /// JSON serializer settings that are considered during object serialization.
         /// </param>
-        public DefaultJsonSerializer(Assembly assembly, JsonSerializerSettings jsonSettings = null)
+        public DefaultJsonSerializer(Assembly assembly, JsonSerializerSettings jsonSettings)
         {
             _assembly = assembly;
             _jsonSettings = jsonSettings ?? _defaultJsonSettings;
@@ -38,6 +38,17 @@ namespace UwpNetworkingEssentials
                 .Distinct()
                 .SelectMany(asm => asm.GetTypes())
                 .ToDictionary(t => t.FullName);
+        }
+
+        /// <summary>
+        /// Initializes a new default serializer with default JSON
+        /// serialization settings.
+        /// </summary>
+        /// <param name="assembly">
+        /// The assembly that is used for type lookup and instantiation
+        /// </param>
+        public DefaultJsonSerializer(Assembly assembly) : this(assembly, _defaultJsonSettings)
+        {
         }
 
         public async Task<object> DeserializeAsync(DataReader reader, CancellationToken cancellationToken)

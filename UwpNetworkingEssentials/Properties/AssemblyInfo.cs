@@ -1,15 +1,14 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("UwpNetworkingEssentials")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("UWP Networking Essentials")]
+[assembly: AssemblyDescription("Simple and lightweight networking (including RPC) for Universal Windows Platform apps")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("UwpNetworkingEssentials")]
+[assembly: AssemblyCompany("Sven Erik Vinkemeier")]
+[assembly: AssemblyProduct("UWP Networking Essentials")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
