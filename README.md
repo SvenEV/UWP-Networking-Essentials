@@ -1,6 +1,8 @@
 # UWP Networking Essentials
 Simple and lightweight networking (including RPC) for Universal Windows Platform apps.
 
+Available on [NuGet: UWP Networking Essentials](https://www.nuget.org/packages/UwpNetworkingEssentials/).
+
 ## Features
 * Easily connect UWP apps running on multiple devices
 * Exchange arbitrary objects between server and clients (JSON serialized by default)
