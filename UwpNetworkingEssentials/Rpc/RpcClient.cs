@@ -9,8 +9,10 @@ namespace UwpNetworkingEssentials.Rpc
         private readonly RpcConnection _connection;
         private readonly object _rpcTarget;
 
+        /// <inheritdoc/>
         public RpcConnection Connection => _connection;
 
+        /// <inheritdoc/>
         public dynamic Server => _connection.Proxy;
 
         private RpcClient(RpcConnection connection, object rpcTarget)
@@ -33,21 +35,29 @@ namespace UwpNetworkingEssentials.Rpc
         /// <returns></returns>
         public static async Task<RpcClient> ConnectAsync(string hostName, string port, object rpcTarget, IObjectSerializer serializer)
         {
-            var connection = await StreamSocketConnection.ConnectAsync(hostName, port, serializer);
+            try
+            {
+                var connection = await StreamSocketConnection.ConnectAsync(hostName, port, serializer);
 
-            if (connection == null)
-                return null;
+                if (connection == null)
+                    return null;
 
-            var rpcConnection = new RpcConnection(connection);
-            var client = new RpcClient(rpcConnection, rpcTarget);
+                var rpcConnection = new RpcConnection(connection);
+                var client = new RpcClient(rpcConnection, rpcTarget);
 
-            connection.ObjectReceived.OfType<RpcCall>().Subscribe(client.OnCall);
-            connection.ObjectReceived.OfType<StreamSocketConnectionCloseMessage>().Subscribe(__ => client.OnDisconnected());
+                connection.ObjectReceived.OfType<RpcCall>().Subscribe(client.OnCall);
+                connection.ObjectReceived.OfType<StreamSocketConnectionCloseMessage>().Subscribe(__ => client.OnDisconnected());
 
+                (rpcTarget as IRpcTarget)?.OnConnected(rpcConnection);
 
-            (rpcTarget as IRpcTarget)?.OnConnected(rpcConnection);
-
-            return new RpcClient(rpcConnection, rpcTarget);
+                return new RpcClient(rpcConnection, rpcTarget);
+            }
+            catch (Exception exception)
+            {
+                var rpcException = new RpcConnectionAttemptFailedException(hostName, port, exception);
+                (rpcTarget as IRpcTarget)?.OnConnectionAttemptFailed(rpcException);
+                throw rpcException;
+            }
         }
 
         private void OnCall(RpcCall call)
@@ -58,6 +68,12 @@ namespace UwpNetworkingEssentials.Rpc
         private void OnDisconnected()
         {
             (_rpcTarget as IRpcTarget)?.OnDisconnected(_connection);
+        }
+
+        /// <inheritdoc/>
+        public async Task DisposeAsync()
+        {
+            await _connection.DisposeAsync();
         }
     }
 }

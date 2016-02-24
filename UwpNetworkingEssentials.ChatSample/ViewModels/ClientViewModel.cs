@@ -47,6 +47,12 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             }
         }
 
+        public async void Disconnect()
+        {
+            await Client.DisposeAsync();
+            Messages.Add("Client disconnected");
+        }
+
         public async void AddMessage(string message, [RpcCaller]RpcConnection caller)
         {
             // RPC method called by the server to add a message that has been
@@ -63,6 +69,11 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
         public void OnDisconnected(RpcConnection connection)
         {
             Messages.Add($"Disconnected from {connection.RemoteAddress}:{connection.RemotePort} (ID: {connection.Id})");
+        }
+
+        public void OnConnectionAttemptFailed(RpcConnectionAttemptFailedException exception)
+        {
+            Messages.Add($"Failed to connect to {exception.RemoteHostName}:{exception.RemotePort}");
         }
     }
 }

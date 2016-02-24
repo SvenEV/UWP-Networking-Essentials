@@ -43,6 +43,12 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             await Server.AllClients.AddMessage(message);
         }
 
+        public async void CloseServer()
+        {
+            await Server.DisposeAsync();
+            Messages.Add("Server closed");
+        }
+
         public async void BroadcastMessage(string message, [RpcCaller]RpcConnection caller)
         {
             // RPC method called by a client to broadcast a message
@@ -68,6 +74,14 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             {
                 Messages.Add($"Client disconnected: {connection.RemoteAddress}:{connection.RemotePort} (ID: {connection.Id})");
                 RaisePropertyChanged(nameof(ClientCount));
+            });
+        }
+
+        public async void OnConnectionAttemptFailed(RpcConnectionAttemptFailedException exception)
+        {
+            await DispatcherHelper.RunAsync(() =>
+            {
+                Messages.Add($"Client tried to connect but failed: {exception.RemoteHostName}:{exception.RemotePort}");
             });
         }
     }

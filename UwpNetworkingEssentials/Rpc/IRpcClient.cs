@@ -1,4 +1,6 @@
-﻿namespace UwpNetworkingEssentials.Rpc
+﻿using System.Threading.Tasks;
+
+namespace UwpNetworkingEssentials.Rpc
 {
     public interface IRpcClient
     {
@@ -12,5 +14,11 @@
         /// methods on the server.
         /// </summary>
         dynamic Server { get; }
+
+        /// <summary>
+        /// Closes the connection to the server.
+        /// </summary>
+        /// <returns></returns>
+        Task DisposeAsync();
     }
 }

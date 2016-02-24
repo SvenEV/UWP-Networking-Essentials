@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Networking.Sockets;
 
@@ -13,12 +14,30 @@ namespace UwpNetworkingEssentials.Rpc
         private readonly IObjectSerializer _serializer;
         private readonly StreamSocketListener _listener;
         private readonly Dictionary<string, RpcConnection> _connections = new Dictionary<string, RpcConnection>();
+        private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
         private readonly object _rpcTarget;
+        private readonly object _lock = new object();
+        private bool _isDisposed = false;
 
+        /// <inheritdoc/>
         public IReadOnlyDictionary<string, RpcConnection> Connections => _connections;
 
-        public dynamic AllClients => new RpcMultiProxy(_connections.Values.Select(c => c._proxy));
+        /// <inheritdoc/>
+        public dynamic AllClients
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_isDisposed)
+                        throw new ObjectDisposedException(nameof(RpcServer));
 
+                    return new RpcMultiProxy(_connections.Values.Select(c => c._proxy));
+                }
+            }
+        }
+
+        /// <inheritdoc/>
         public string Port => _listener.Information.LocalPort;
 
         private RpcServer(StreamSocketListener listener, object rpcTarget, IObjectSerializer serializer)
@@ -48,14 +67,28 @@ namespace UwpNetworkingEssentials.Rpc
             return server;
         }
 
+        /// <inheritdoc/>
         public dynamic Client(string connectionId)
         {
-            return _connections[connectionId].Proxy;
+            lock (_lock)
+            {
+                if (_isDisposed)
+                    throw new ObjectDisposedException(nameof(RpcServer));
+
+                return _connections[connectionId].Proxy;
+            }
         }
 
+        /// <inheritdoc/>
         public dynamic ClientsExcept(string connectionId)
         {
-            return new RpcMultiProxy(_connections.Values.Where(c => c.Id != connectionId).Select(c => c._proxy));
+            lock (_lock)
+            {
+                if (_isDisposed)
+                    throw new ObjectDisposedException(nameof(RpcServer));
+
+                return new RpcMultiProxy(_connections.Values.Where(c => c.Id != connectionId).Select(c => c._proxy));
+            }
         }
 
         private async void OnConnectionReceived(StreamSocketListener _, StreamSocketListenerConnectionReceivedEventArgs args)
@@ -66,6 +99,7 @@ namespace UwpNetworkingEssentials.Rpc
 
                 if (connection != null)
                 {
+                    await _sema.WaitAsync();
                     var rpcConnection = new RpcConnection(connection);
                     connection.ObjectReceived.OfType<RpcCall>().Subscribe(call => OnCall(rpcConnection, call));
                     connection.ObjectReceived.OfType<StreamSocketConnectionCloseMessage>().Subscribe(__ => OnClientDisconnected(rpcConnection));
@@ -73,12 +107,16 @@ namespace UwpNetworkingEssentials.Rpc
                     _connections.Add(connection.Id, rpcConnection);
 
                     (_rpcTarget as IRpcTarget)?.OnConnected(rpcConnection);
+                    _sema.Release();
                 }
             }
-            catch
+            catch ( Exception exception)
             {
-                // What now?
-                Debugger.Break();
+                var rpcException = new RpcConnectionAttemptFailedException(
+                    args.Socket.Information.RemoteHostName.ToString(),
+                    args.Socket.Information.RemotePort, exception);
+
+                (_rpcTarget as IRpcTarget)?.OnConnectionAttemptFailed(rpcException);
             }
         }
 
@@ -87,9 +125,33 @@ namespace UwpNetworkingEssentials.Rpc
             RpcHelper.HandleMethodCall(connection, call, _rpcTarget);
         }
 
-        private void OnClientDisconnected(RpcConnection connection)
+        private async void OnClientDisconnected(RpcConnection connection)
         {
+            await _sema.WaitAsync();
+            _connections.Remove(connection.Id);
             (_rpcTarget as IRpcTarget)?.OnDisconnected(connection);
+            _sema.Release();
+        }
+
+        /// <inheritdoc/>
+        public async Task DisposeAsync()
+        {
+            await _sema.WaitAsync();
+
+            try
+            {
+                lock (_lock)
+                {
+                    _isDisposed = true;
+                }
+                var disposalTasks = _connections.Values.Select(conn => conn.DisposeAsync());
+                await Task.WhenAll(disposalTasks);
+                _connections.Clear();
+            }
+            finally
+            {
+                _sema.Release();
+            }
         }
     }
 }

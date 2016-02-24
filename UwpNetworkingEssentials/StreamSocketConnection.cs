@@ -21,6 +21,7 @@ namespace UwpNetworkingEssentials
         private readonly DataReader _reader;
         private readonly DataWriter _writer;
         private readonly Task _receiverTask;
+        private readonly CancellationTokenSource _receiverTaskCancellationTokenSource = new CancellationTokenSource();
         private readonly Subject<object> _objectReceived = new Subject<object>();
         private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
         private bool _isDisposed = false;
@@ -47,7 +48,7 @@ namespace UwpNetworkingEssentials
             using (var reader = new DataReader(socket.InputStream))
             using (var writer = new DataWriter(socket.OutputStream))
             {
-                var request = await serializer.DeserializeAsync(reader) as StreamSocketConnectionRequest;
+                var request = await serializer.DeserializeAsync(reader, CancellationToken.None) as StreamSocketConnectionRequest;
 
                 if (request == null)
                 {
@@ -75,42 +76,37 @@ namespace UwpNetworkingEssentials
             var socket = new StreamSocket();
             var host = new HostName(hostName);
 
-            try
-            {
-                await socket.ConnectAsync(host, port);
+            await socket.ConnectAsync(host, port);
 
-                using (var reader = new DataReader(socket.InputStream))
-                using (var writer = new DataWriter(socket.OutputStream))
+            using (var reader = new DataReader(socket.InputStream))
+            using (var writer = new DataWriter(socket.OutputStream))
+            {
+                await serializer.SerializeAsync(new StreamSocketConnectionRequest(), writer);
+                var response = await serializer.DeserializeAsync(reader, CancellationToken.None) as StreamSocketConnectionResponse;
+
+                if (response != null && response.IsSuccessful)
                 {
-                    await serializer.SerializeAsync(new StreamSocketConnectionRequest(), writer);
-                    var response = await serializer.DeserializeAsync(reader) as StreamSocketConnectionResponse;
-
-                    if (response?.IsSuccessful ?? false)
-                    {
-                        reader.DetachStream();
-                        writer.DetachStream();
-                        return new StreamSocketConnection(response.ConnectionId, socket, serializer);
-                    }
-                    else
-                    {
-                        socket.Dispose();
-                        throw new InvalidOperationException($"Failed to connect to '{hostName}:{port}'");
-                    }
+                    reader.DetachStream();
+                    writer.DetachStream();
+                    return new StreamSocketConnection(response.ConnectionId, socket, serializer);
                 }
-            }
-            catch
-            {
-                // What now?
-                Debugger.Break();
-                throw;
+                else
+                {
+                    socket.Dispose();
+                    throw new InvalidOperationException($"Failed to connect to '{hostName}:{port}'");
+                }
             }
         }
 
         public async Task SendAsync(object o)
         {
             await _sema.WaitAsync();
+
             try
             {
+                if (_isDisposed)
+                    throw new ObjectDisposedException(nameof(StreamSocketConnection));
+
                 await _serializer.SerializeAsync(o, _writer);
             }
             finally
@@ -122,26 +118,43 @@ namespace UwpNetworkingEssentials
         public async Task<TResponse> RequestAsync<TResponse>(object requestObject)
         {
             await _sema.WaitAsync();
-            await _serializer.SerializeAsync(requestObject, _writer);
-            _sema.Release();
+
+            try
+            {
+                if (_isDisposed)
+                    throw new ObjectDisposedException(nameof(StreamSocketConnection));
+
+                await _serializer.SerializeAsync(requestObject, _writer);
+            }
+            finally
+            {
+                _sema.Release();
+            }
+
             var response = await _objectReceived.OfType<TResponse>().FirstOrDefaultAsync();
             return response;
         }
 
         public async Task DisposeAsync()
         {
+            await _sema.WaitAsync();
+
             try
             {
+                if (_isDisposed)
+                    return;
+
                 _isDisposed = true;
-                await _receiverTask;
 
                 // Inform peer that we are closing the connection
                 await _serializer.SerializeAsync(new StreamSocketConnectionCloseMessage(), _writer);
+
+                _receiverTaskCancellationTokenSource.Cancel();
+                await _receiverTask;
             }
             finally
             {
-                _objectReceived.OnNext(new StreamSocketConnectionCloseMessage());
-                DisposeInternal();
+                _sema.Release();
             }
         }
 
@@ -152,7 +165,7 @@ namespace UwpNetworkingEssentials
                 try
                 {
                     // Receive next message
-                    var o = await _serializer.DeserializeAsync(_reader);
+                    var o = await _serializer.DeserializeAsync(_reader, _receiverTaskCancellationTokenSource.Token);
 
                     if (o is StreamSocketConnectionCloseMessage)
                     {
@@ -175,6 +188,7 @@ namespace UwpNetworkingEssentials
                 catch
                 {
                     // Some other error occurred
+                    // (e.g. OperationCanceledException after DeserializeAsync is cancelled)
                     _objectReceived.OnNext(new StreamSocketConnectionCloseMessage());
                     DisposeInternal();
                 }

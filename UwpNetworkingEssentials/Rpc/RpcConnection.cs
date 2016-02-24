@@ -1,4 +1,6 @@
-﻿namespace UwpNetworkingEssentials.Rpc
+﻿using System.Threading.Tasks;
+
+namespace UwpNetworkingEssentials.Rpc
 {
     public class RpcConnection
     {
@@ -19,6 +21,15 @@
         {
             SocketConnection = connection;
             _proxy = new RpcProxy(connection);
+        }
+
+        /// <summary>
+        /// Closes the connection.
+        /// </summary>
+        /// <returns></returns>
+        public async Task DisposeAsync()
+        {
+            await SocketConnection.DisposeAsync();
         }
     }
 }

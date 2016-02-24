@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using Windows.Storage.Streams;
 
 namespace UwpNetworkingEssentials
@@ -18,7 +19,8 @@ namespace UwpNetworkingEssentials
         /// Asynchronously blocks until an object is available.
         /// </summary>
         /// <param name="reader">Stream reader</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>The object</returns>
-        Task<object> DeserializeAsync(DataReader reader);
+        Task<object> DeserializeAsync(DataReader reader, CancellationToken cancellationToken);
     }
 }

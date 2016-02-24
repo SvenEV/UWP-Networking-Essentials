@@ -119,6 +119,7 @@
     <Compile Include="Rpc\RpcCallerAttribute.cs" />
     <Compile Include="Rpc\RpcClient.cs" />
     <Compile Include="Rpc\RpcConnection.cs" />
+    <Compile Include="Rpc\RpcConnectionAttemptFailedException.cs" />
     <Compile Include="Rpc\RpcHelper.cs" />
     <Compile Include="Rpc\RpcMultiProxy.cs" />
     <Compile Include="Rpc\RpcProxy.cs" />

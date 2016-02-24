@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
 
@@ -39,11 +40,11 @@ namespace UwpNetworkingEssentials
                 .ToDictionary(t => t.FullName);
         }
 
-        public async Task<object> DeserializeAsync(DataReader reader)
+        public async Task<object> DeserializeAsync(DataReader reader, CancellationToken cancellationToken)
         {
-            await reader.LoadAsync(sizeof(uint));
+            await reader.LoadAsync(sizeof(uint)).AsTask(cancellationToken);
             var totalLength = reader.ReadUInt32();
-            await reader.LoadAsync(totalLength);
+            await reader.LoadAsync(totalLength).AsTask(cancellationToken);
 
             var json = reader.ReadString(totalLength);
             var message = JsonConvert.DeserializeObject<Message>(json);

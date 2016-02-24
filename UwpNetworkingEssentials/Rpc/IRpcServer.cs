@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -9,6 +10,11 @@ namespace UwpNetworkingEssentials.Rpc
         /// The dictionary keys correspond to connection IDs.
         /// </summary>
         IReadOnlyDictionary<string, RpcConnection> Connections { get; }
+
+        /// <summary>
+        /// Gets the local port that is listened on.
+        /// </summary>
+        string Port { get; }
 
         /// <summary>
         /// Gets a proxy that can be used to invoke
@@ -34,8 +40,9 @@ namespace UwpNetworkingEssentials.Rpc
         dynamic ClientsExcept(string connectionId);
 
         /// <summary>
-        /// Gets the local port that is listened on.
+        /// Disconnects all clients and stops the server.
         /// </summary>
-        string Port { get; }
+        /// <returns></returns>
+        Task DisposeAsync();
     }
 }

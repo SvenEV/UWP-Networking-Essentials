@@ -25,4 +25,11 @@
                  PlaceholderText="Your message"
                  KeyDown="TextBox_KeyDown"/>
     </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Icon="Cancel" Label="Disconnect"
+                          Click="{x:Bind ViewModel.Disconnect}"/>
+        </CommandBar>
+    </Page.BottomAppBar>
 </Page>

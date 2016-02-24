@@ -25,4 +25,11 @@
                  PlaceholderText="Your message"
                  KeyDown="TextBox_KeyDown"/>
     </Grid>
+
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Icon="Cancel" Label="Close Server"
+                          Click="{x:Bind ViewModel.CloseServer}"/>
+        </CommandBar>
+    </Page.BottomAppBar>
 </Page>
