@@ -51,7 +51,7 @@ namespace UwpNetworkingEssentials.Rpc
                 }
                 else if (!formalParam.ParameterType.IsAssignableFrom(actualParam.GetType()))
                 {
-                    return RpcReturn.Faulted($"Parameter mismatch: Got value of type '{actualParam.GetType().FullName}' for parameter '{formalParam.GetType().FullName} {formalParam.Name}'");
+                    return RpcReturn.Faulted($"Parameter mismatch: Got value of type '{actualParam.GetType().FullName}' for parameter '{formalParam.ParameterType.FullName} {formalParam.Name}'");
                 }
 
                 if (formalParam.CustomAttributes.Any(a => a.AttributeType == typeof(RpcCallerAttribute)) &&
@@ -73,7 +73,7 @@ namespace UwpNetworkingEssentials.Rpc
             {
                 await (Task)returnValue;
 
-                if (returnValue.GetType() == typeof(Task<>))
+                if (returnValue.GetType().GetGenericTypeDefinition() == typeof(Task<>))
                     returnValue = ((dynamic)returnValue).Result;
                 else
                     returnValue = null;

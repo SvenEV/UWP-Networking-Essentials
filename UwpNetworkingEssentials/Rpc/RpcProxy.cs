@@ -29,7 +29,7 @@ namespace UwpNetworkingEssentials.Rpc
             var result = await _connection.RequestAsync<RpcReturn>(call);
 
             if (result == null || !result.IsSuccessful)
-                throw new InvalidOperationException($"The remote procedure call failed ({result?.Error ?? "no details"})");
+                throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed ({result?.Error ?? "no details"})");
 
             return result.Value;
         }

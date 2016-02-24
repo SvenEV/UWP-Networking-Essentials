@@ -12,21 +12,13 @@ namespace UwpNetworkingEssentials
     /// <summary>
     /// A simple serializer that converts objects to/from JSON representation.
     /// </summary>
-    /// <remarks>
-    /// Packet structure:
-    /// - Total length       : uint   (total length of the packet without the "total length" uint)
-    /// - Type name length   : uint
-    /// - Type name          : string
-    /// - Generic args count : uint
-    /// - For each generic parameter
-    ///   - Type name length : uint
-    ///   - Type name        : string
-    /// - Data               : JSON
-    /// </remarks>
     public class DefaultJsonSerializer : IObjectSerializer
     {
+        private static readonly JsonSerializerSettings _defaultJsonSettings = new JsonSerializerSettings();
+
         private readonly Assembly _assembly;
         private readonly Dictionary<string, Type> _types;
+        private readonly JsonSerializerSettings _jsonSettings;
 
         /// <summary>
         /// Initializes a new default serializer.
@@ -34,9 +26,13 @@ namespace UwpNetworkingEssentials
         /// <param name="assembly">
         /// The assembly that is used for type lookup and instantiation
         /// </param>
-        public DefaultJsonSerializer(Assembly assembly)
+        /// <param name="jsonSettings">
+        /// JSON serializer settings that are considered during object serialization.
+        /// </param>
+        public DefaultJsonSerializer(Assembly assembly, JsonSerializerSettings jsonSettings = null)
         {
             _assembly = assembly;
+            _jsonSettings = jsonSettings ?? _defaultJsonSettings;
             _types = new[] { _assembly, GetType().GetTypeInfo().Assembly }
                 .Distinct()
                 .SelectMany(asm => asm.GetTypes())
@@ -56,18 +52,18 @@ namespace UwpNetworkingEssentials
             var genericParams = message.GenericTypeParameters.Select(LookupType).ToArray();
             var finalType = genericParams.Length == 0 ? type : type.MakeGenericType(genericParams);
 
-            var value = JsonConvert.DeserializeObject(message.Value, finalType);
+            var value = JsonConvert.DeserializeObject(message.Value, finalType, _jsonSettings);
             return value;
         }
 
         public async Task SerializeAsync(object o, DataWriter writer)
         {
-            var json = JsonConvert.SerializeObject(new Message(o));
+            var json = JsonConvert.SerializeObject(new Message(o, _jsonSettings));
 
             var bytes = Encoding.UTF8.GetBytes(json);
             writer.WriteUInt32((uint)bytes.Length);
             writer.WriteBytes(bytes);
-            
+
             await writer.StoreAsync();
         }
 
@@ -91,9 +87,9 @@ namespace UwpNetworkingEssentials
             {
             }
 
-            public Message(object value)
+            public Message(object value, JsonSerializerSettings jsonSettings)
             {
-                Value = JsonConvert.SerializeObject(value);
+                Value = JsonConvert.SerializeObject(value, jsonSettings);
                 TypeName = value.GetType().FullName;
                 GenericTypeParameters = value.GetType().GenericTypeArguments
                     .Select(t => t.FullName).ToArray();
