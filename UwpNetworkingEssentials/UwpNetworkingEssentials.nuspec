@@ -3,14 +3,14 @@
   <metadata>
     <id>UwpNetworkingEssentials</id>
     <title>UWP Networking Essentials</title>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <authors>Sven Erik Vinkemeier</authors>
     <owners>Sven Erik Vinkemeier</owners>
     <licenseUrl>https://raw.githubusercontent.com/SvenEV/UWP-Networking-Essentials/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/SvenEV/UWP-Networking-Essentials</projectUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Simple and lightweight networking (including RPC) for Universal Windows Platform apps</description>
-    <releaseNotes>Initial release</releaseNotes>
+    <releaseNotes>Bug fixes and more detailed error messages</releaseNotes>
     <copyright>Copyright 2016</copyright>
     <tags>UWP Windows 10 Windows10 WinRT RPC Messaging ZeroMQ AMQP SignalR Queuing MQ</tags>
     <dependencies>

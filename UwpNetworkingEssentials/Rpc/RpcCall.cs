@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Linq;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -22,5 +23,8 @@ namespace UwpNetworkingEssentials.Rpc
             MethodName = methodName;
             Parameters = parameters;
         }
+
+        public override string ToString()
+            => $"{MethodName}({string.Join(", ", Parameters.Select(p => p == null ? "null" : p.GetType().Name))})";
     }
 }
