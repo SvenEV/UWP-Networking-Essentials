@@ -82,12 +82,23 @@ namespace UwpNetworkingEssentials
             {
             }
 
-            public JsonMessage(object value, JsonSerializerSettings jsonSettings)
+            public JsonMessage(object o, JsonSerializerSettings jsonSettings)
             {
-                Value = JsonConvert.SerializeObject(value, jsonSettings);
-                TypeName = value.GetType().FullName;
-                GenericTypeParameters = value.GetType().GenericTypeArguments
-                    .Select(t => t.FullName).ToArray();
+                Value = JsonConvert.SerializeObject(o, jsonSettings);
+
+                var type = o.GetType();
+
+                if (type.IsConstructedGenericType)
+                {
+                    TypeName = type.GetGenericTypeDefinition().FullName;
+                    GenericTypeParameters = o.GetType().GenericTypeArguments
+                        .Select(t => t.FullName).ToArray();
+                }
+                else
+                {
+                    TypeName = type.FullName;
+                    GenericTypeParameters = Array.Empty<string>();
+                }
             }
         }
     }

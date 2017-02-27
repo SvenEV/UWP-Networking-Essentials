@@ -242,3 +242,4 @@ _Pvt_Extensions
 .idea/
 *.sln.iml
 
+/MakeNuGetPackage.bat
