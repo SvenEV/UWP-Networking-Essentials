@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Reflection;
+using UwpNetworkingEssentials.AppServices;
+using UwpNetworkingEssentials.Rpc;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -8,9 +11,15 @@ namespace UwpNetworkingEssentials.ChatSample
 {
     sealed partial class App : Application
     {
+        public static ASConnectionListener TheASConnectionListener { get; set; }
+
         public App()
         {
             InitializeComponent();
+
+            TheASConnectionListener = new ASConnectionListener(
+                new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly));
+            TheASConnectionListener.StartAsync();
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
@@ -30,6 +39,15 @@ namespace UwpNetworkingEssentials.ChatSample
             }
 
             Window.Current.Activate();
+        }
+
+        protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
+        {
+            if (TheASConnectionListener == null ||
+                !await TheASConnectionListener.HandleBackgroundActivationAsync(args))
+            {
+                // Handle other stuff
+            }
         }
 
         private void OnNavigationFailed(object sender, NavigationFailedEventArgs e)

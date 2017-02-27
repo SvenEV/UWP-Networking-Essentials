@@ -12,9 +12,10 @@ namespace UwpNetworkingEssentials.Rpc
         IReadOnlyDictionary<string, RpcConnection> Connections { get; }
 
         /// <summary>
-        /// Gets the local port that is listened on.
+        /// Gets the connection listener that listens for
+        /// incoming connections.
         /// </summary>
-        string Port { get; }
+        IConnectionListener Listener { get; }
 
         /// <summary>
         /// Gets a proxy that can be used to invoke

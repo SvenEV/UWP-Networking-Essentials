@@ -1,38 +1,64 @@
 ﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Threading;
-using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
+using UwpNetworkingEssentials.AppServices;
+using UwpNetworkingEssentials.MultiChannel;
 using UwpNetworkingEssentials.Rpc;
+using UwpNetworkingEssentials.StreamSockets;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public class ServerViewModel : ViewModelBase, IRpcTarget
+    public partial class ServerViewModel : ViewModelBase, IRpcTarget
     {
+        private readonly MultiChannelConnectionListener _multiChannelListener;
+        private readonly Frame _frame = Window.Current.Content as Frame;
+        private readonly IObjectSerializer _serializer;
+        private string _port = "1234";
+
         public RpcServer Server { get; private set; }
 
-        public int ClientCount => Server.Connections.Count;
+        public string Port { get => _port; set => Set(ref _port, value); }
+
+        public int ClientCount => Server?.Connections.Count ?? 0;
 
         public ObservableCollection<string> Messages { get; } = new ObservableCollection<string>();
 
-        public ServerViewModel(string port)
+        public ServerViewModel()
         {
-            Init(port);
+            _serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
+
+            _multiChannelListener = new MultiChannelConnectionListener();
+            _multiChannelListener.StartAsync();
+
+            Server = new RpcServer(_multiChannelListener, this);
+            Messages.Add($"Server started");
+            RaisePropertyChanged(nameof(Server));
         }
 
-        private async void Init(string port)
+        public async void StartStreamSocketConnectionListener()
         {
             try
             {
-                var serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
-                Server = await RpcServer.StartAsync(port, this, serializer);
-                Messages.Add($"Server started on port {port}");
-                RaisePropertyChanged(nameof(Server));
+                var listener = new StreamSocketConnectionListener(Port, _serializer);
+                await listener.StartAsync();
+                _multiChannelListener.Listeners.Add(listener);
             }
             catch
             {
-                Messages.Add($"Failed to start server on port {port}");
+                Messages.Add($"Failed to start all connection listeners");
             }
+        }
+
+        public async void StartASConnectionListener()
+        {
+            var listener = new ASConnectionListener(_serializer);
+            await listener.StartAsync();
+            _multiChannelListener.Listeners.Add(listener);
+            App.TheASConnectionListener = listener;
         }
 
         public async void SendMessage(string message)
@@ -47,42 +73,8 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
         {
             await Server.DisposeAsync();
             Messages.Add("Server closed");
-        }
-
-        public async void BroadcastMessage(string message, [RpcCaller]RpcConnection caller)
-        {
-            // RPC method called by a client to broadcast a message
-            // to all other connected clients
-            await DispatcherHelper.RunAsync(() =>
-                Messages.Add($"{caller.RemoteAddress}:{caller.RemotePort} said: " + message));
-
-            Server.ClientsExcept(caller.Id).AddMessage(message);
-        }
-
-        public async void OnConnected(RpcConnection connection)
-        {
-            await DispatcherHelper.RunAsync(() =>
-            {
-                Messages.Add($"Client connected: {connection.RemoteAddress}:{connection.RemotePort} (ID: {connection.Id})");
-                RaisePropertyChanged(nameof(ClientCount));
-            });
-        }
-
-        public async void OnDisconnected(RpcConnection connection)
-        {
-            await DispatcherHelper.RunAsync(() =>
-            {
-                Messages.Add($"Client disconnected: {connection.RemoteAddress}:{connection.RemotePort} (ID: {connection.Id})");
-                RaisePropertyChanged(nameof(ClientCount));
-            });
-        }
-
-        public async void OnConnectionAttemptFailed(RpcConnectionAttemptFailedException exception)
-        {
-            await DispatcherHelper.RunAsync(() =>
-            {
-                Messages.Add($"Client tried to connect but failed: {exception.RemoteHostName}:{exception.RemotePort}");
-            });
+            await Task.Delay(2000);
+            _frame.GoBack();
         }
     }
 }

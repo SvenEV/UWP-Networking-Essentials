@@ -7,19 +7,20 @@ namespace UwpNetworkingEssentials.Rpc
 {
     internal static class RpcHelper
     {
-        public static async void HandleMethodCall(RpcConnection connection, RpcCall call, object rpcTarget)
+        public static async void HandleMethodCall(RpcConnection connection, IRequest rpcCallRequest, object rpcTarget)
         {
             try
             {
                 if (rpcTarget == null)
-                    await connection.SocketConnection.SendAsync(RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
+                    await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
 
+                var call = (RpcCall)rpcCallRequest.Message;
                 var result = await InvokeMethodAsync(rpcTarget, connection, call);
-                await connection.SocketConnection.SendAsync(result);
+                await rpcCallRequest.SendResponseAsync(result);
             }
             catch
             {
-                await connection.SocketConnection.SendAsync(RpcReturn.Faulted("Unknown error"));
+                await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("Unknown error"));
             }
         }
 

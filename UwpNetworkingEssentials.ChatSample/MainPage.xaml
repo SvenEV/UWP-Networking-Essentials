@@ -7,6 +7,16 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.Transitions>
+        <TransitionCollection>
+            <NavigationThemeTransition>
+                <NavigationThemeTransition.DefaultNavigationTransitionInfo>
+                    <DrillInNavigationTransitionInfo/>
+                </NavigationThemeTransition.DefaultNavigationTransitionInfo>
+            </NavigationThemeTransition>
+        </TransitionCollection>
+    </Page.Transitions>
+
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
         <TextBlock Margin="12" VerticalAlignment="Bottom">
@@ -18,26 +28,26 @@
                 VerticalAlignment="Center"
                 Width="340">
 
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="24"/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Server" Style="{StaticResource TitleTextBlockStyle}"/>
-                    <TextBox PlaceholderText="Port" Text="{x:Bind ViewModel.Port, Mode=TwoWay}"/>
-                    <Button Content="Start Server" Click="{x:Bind ViewModel.StartServer}"/>
-                </StackPanel>
+            <StackPanel>
 
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Client" Style="{StaticResource TitleTextBlockStyle}"/>
-                    <TextBox PlaceholderText="Server IP" Text="{x:Bind ViewModel.ServerIp, Mode=TwoWay}"/>
-                    <TextBox PlaceholderText="Server Port" Text="{x:Bind ViewModel.Port, Mode=TwoWay}"/>
-                    <Button Content="Connect" Click="{x:Bind ViewModel.ConnectClient}"/>
-                </StackPanel>
-            </Grid>
+                <TextBlock Text="Server" FontWeight="Bold"/>
+
+                <Button Content="Act as Server" Click="{x:Bind ViewModel.StartServer}"/>
+
+                <TextBlock Text="Client" FontWeight="Bold"/>
+                
+                <TextBlock Text="Stream Sockets" FontWeight="Bold"/>
+
+                <TextBlock Text="Client" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBox PlaceholderText="Server IP" Text="{x:Bind ViewModel.ServerIp, Mode=TwoWay}"/>
+                <TextBox PlaceholderText="Server Port" Text="{x:Bind ViewModel.Port, Mode=TwoWay}"/>
+                <Button Content="Connect" Click="{x:Bind ViewModel.ConnectClientViaStreamSockets}"/>
+
+                <TextBlock Text="App Services" FontWeight="Bold"/>
+                <TextBox PlaceholderText="Package Family Name" Text="{x:Bind ViewModel.PackageFamilyName, Mode=TwoWay}"/>
+                <Button Content="Connect" Click="{x:Bind ViewModel.ConnectClientViaAppServices}"/>
+
+            </StackPanel>
 
         </Border>
 

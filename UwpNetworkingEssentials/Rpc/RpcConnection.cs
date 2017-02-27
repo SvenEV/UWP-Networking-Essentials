@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -6,20 +7,18 @@ namespace UwpNetworkingEssentials.Rpc
     {
         internal readonly RpcProxy _proxy;
 
-        internal StreamSocketConnection SocketConnection { get; }
+        public IConnection UnderlyingConnection { get; }
 
-        public string Id => SocketConnection.Id;
-
-        public string LocalAddress => SocketConnection.Information.LocalAddress.ToString();
-        public string LocalPort => SocketConnection.Information.LocalPort;
-        public string RemoteAddress => SocketConnection.Information.RemoteAddress.ToString();
-        public string RemotePort => SocketConnection.Information.RemotePort;
-
+        public string Id => UnderlyingConnection.Id;
+        
         public dynamic Proxy => _proxy;
 
-        internal RpcConnection(StreamSocketConnection connection)
+        internal RpcConnection(IConnection connection)
         {
-            SocketConnection = connection;
+            if (connection == null)
+                throw new ArgumentNullException(nameof(connection));
+
+            UnderlyingConnection = connection;
             _proxy = new RpcProxy(connection);
         }
 
@@ -29,7 +28,7 @@ namespace UwpNetworkingEssentials.Rpc
         /// <returns></returns>
         public async Task DisposeAsync()
         {
-            await SocketConnection.DisposeAsync();
+            await UnderlyingConnection.DisposeAsync();
         }
     }
 }

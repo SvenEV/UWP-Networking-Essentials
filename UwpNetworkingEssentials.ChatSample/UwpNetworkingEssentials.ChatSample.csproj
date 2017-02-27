@@ -11,7 +11,7 @@
     <AssemblyName>UwpNetworkingEssentials.ChatSample</AssemblyName>
     <DefaultLanguage>de-DE</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
+    <TargetPlatformVersion>10.0.15003.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -106,8 +106,10 @@
       <DependentUpon>ServerPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\ClientViewModel.cs" />
+    <Compile Include="ViewModels\ClientViewModel.Rpc.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\ServerViewModel.cs" />
+    <Compile Include="ViewModels\ServerViewModel.Rpc.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

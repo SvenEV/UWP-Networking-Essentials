@@ -10,9 +10,9 @@ namespace UwpNetworkingEssentials.Rpc
     /// </summary>
     internal class RpcProxy : DynamicObject, IRpcProxy
     {
-        private readonly StreamSocketConnection _connection;
+        private readonly IConnection _connection;
 
-        public RpcProxy(StreamSocketConnection connection)
+        public RpcProxy(IConnection connection)
         {
             _connection = connection;
         }
@@ -26,12 +26,17 @@ namespace UwpNetworkingEssentials.Rpc
 
         internal async Task<object> CallMethodAsync(RpcCall call)
         {
-            var result = await _connection.RequestAsync<RpcReturn>(call);
+            var response = await _connection.SendMessageAsync(call);
 
-            if (result == null || !result.IsSuccessful)
-                throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed ({result?.Error ?? "no details"})");
+            if (response.Message is RpcReturn returnMessage)
+            {
+                if (!returnMessage.IsSuccessful)
+                    throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed ({returnMessage.Error ?? "no details"})");
 
-            return result.Value;
+                return returnMessage.Value;
+            }
+
+            throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed (invalid response message)");
         }
     }
 }

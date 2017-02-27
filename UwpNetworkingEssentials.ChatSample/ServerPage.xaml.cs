@@ -13,6 +13,7 @@ namespace UwpNetworkingEssentials.ChatSample
         public ServerPage()
         {
             InitializeComponent();
+            DataContext = this;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)

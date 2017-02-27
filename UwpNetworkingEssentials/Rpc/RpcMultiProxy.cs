@@ -11,7 +11,7 @@ namespace UwpNetworkingEssentials.Rpc
     /// </summary>
     internal class RpcMultiProxy : DynamicObject, IRpcProxy
     {
-        private RpcProxy[] _proxies;
+        private readonly RpcProxy[] _proxies;
 
         public RpcMultiProxy(IEnumerable<RpcProxy> proxies)
         {

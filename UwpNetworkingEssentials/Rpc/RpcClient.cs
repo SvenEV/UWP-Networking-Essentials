@@ -7,6 +7,8 @@ namespace UwpNetworkingEssentials.Rpc
     public class RpcClient : IRpcClient
     {
         private readonly RpcConnection _connection;
+        private readonly IDisposable _requestReceivedSubscription;
+        private readonly IDisposable _disconnectedSubscription;
         private readonly object _rpcTarget;
 
         /// <inheritdoc/>
@@ -15,65 +17,41 @@ namespace UwpNetworkingEssentials.Rpc
         /// <inheritdoc/>
         public dynamic Server => _connection.Proxy;
 
-        private RpcClient(RpcConnection connection, object rpcTarget)
-        {
-            _connection = connection;
-            _rpcTarget = rpcTarget;
-        }
-
         /// <summary>
-        /// Connects to an <see cref="RpcServer"/>.
+        /// Initializes an <see cref="RpcClient"/> using the specified connection.
         /// </summary>
-        /// <param name="hostName">Remote host name</param>
-        /// <param name="port">Remote port</param>
+        /// <param name="connection">
+        /// The underlying connection used to exchange messages
+        /// </param>
         /// <param name="rpcTarget">
         /// The object where remote procedure calls from the server
         /// are executed on. Set this to null if you do not want to allow
         /// RPC calls from the server to the client.
         /// </param>
-        /// <param name="serializer">Serializer</param>
-        /// <returns></returns>
-        public static async Task<RpcClient> ConnectAsync(string hostName, string port, object rpcTarget, IObjectSerializer serializer)
+        public RpcClient(IConnection connection, object rpcTarget)
         {
-            try
-            {
-                var connection = await StreamSocketConnection.ConnectAsync(hostName, port, serializer);
+            _connection = new RpcConnection(connection);
+            _rpcTarget = rpcTarget;
 
-                if (connection == null)
-                    return null;
+            _requestReceivedSubscription = connection.RequestReceived
+                .Where(r => r.Message is RpcCall)
+                .Subscribe(r => RpcHelper.HandleMethodCall(_connection, r, _rpcTarget));
 
-                var rpcConnection = new RpcConnection(connection);
-                var client = new RpcClient(rpcConnection, rpcTarget);
-
-                connection.ObjectReceived.OfType<RpcCall>().Subscribe(client.OnCall);
-                connection.ObjectReceived.OfType<StreamSocketConnectionCloseMessage>().Subscribe(__ => client.OnDisconnected());
-
-                (rpcTarget as IRpcTarget)?.OnConnected(rpcConnection);
-
-                return new RpcClient(rpcConnection, rpcTarget);
-            }
-            catch (Exception exception)
-            {
-                var rpcException = new RpcConnectionAttemptFailedException(hostName, port, exception);
-                (rpcTarget as IRpcTarget)?.OnConnectionAttemptFailed(rpcException);
-                throw rpcException;
-            }
+            _disconnectedSubscription = connection.Disconnected.Subscribe(OnDisconnected);
+            (rpcTarget as IRpcTarget)?.OnConnected(_connection);
         }
-
-        private void OnCall(RpcCall call)
+        
+        private void OnDisconnected(IDisconnectEventArgs args)
         {
-            RpcHelper.HandleMethodCall(_connection, call, _rpcTarget);
-        }
-
-        private void OnDisconnected()
-        {
-            (_rpcTarget as IRpcTarget)?.OnDisconnected(_connection);
+            (_rpcTarget as IRpcTarget)?.OnDisconnected(_connection, args);
         }
 
         /// <inheritdoc/>
         public async Task DisposeAsync()
         {
             await _connection.DisposeAsync();
+            _requestReceivedSubscription.Dispose();
+            _disconnectedSubscription.Dispose();
         }
     }
 }

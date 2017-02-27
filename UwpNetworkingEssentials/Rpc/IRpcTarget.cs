@@ -32,6 +32,7 @@ namespace UwpNetworkingEssentials.Rpc
         /// client has been closed.
         /// </summary>
         /// <param name="connection">The connection that has been closed</param>
-        void OnDisconnected(RpcConnection connection);
+        /// <param name="args">Provides further information about the disconnect</param>
+        void OnDisconnected(RpcConnection connection, IDisconnectEventArgs args);
     }
 }

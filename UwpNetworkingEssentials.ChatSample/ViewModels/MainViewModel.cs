@@ -1,6 +1,8 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Threading;
+using System;
 using System.Linq;
+using Windows.ApplicationModel;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -9,23 +11,20 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+        public static readonly Guid CustomBluetoothServiceId = Guid.Parse("34B1CF4D-1069-4AD6-89B6-E161D79BE4D8");
+
         private readonly Frame _frame;
         private string _port = "1234";
         private string _serverIp = "192.168.178.";
+        private string _packageFamilyName = Package.Current.Id.FamilyName;
 
-        public string Port
-        {
-            get { return _port; }
-            set { Set(ref _port, value); }
-        }
+        public string Port { get => _port; set => Set(ref _port, value); }
 
-        public string ServerIp
-        {
-            get { return _serverIp; }
-            set { Set(ref _serverIp, value); }
-        }
+        public string ServerIp { get => _serverIp; set => Set(ref _serverIp, value); }
 
         public string LocalIp { get; private set; }
+
+        public string PackageFamilyName { get => _packageFamilyName; set => Set(ref _packageFamilyName, value); }
 
         public MainViewModel()
         {
@@ -36,14 +35,22 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public void StartServer()
         {
-            var vm = new ServerViewModel(Port);
+            var vm = new ServerViewModel();
             _frame.Navigate(typeof(ServerPage), vm);
         }
 
-        public void ConnectClient()
+        public void ConnectClientViaStreamSockets()
         {
-            var vm = new ClientViewModel(Port, ServerIp);
+            var vm = new ClientViewModel();
             _frame.Navigate(typeof(ClientPage), vm);
+            vm.ConnectViaStreamSocketsAsync(Port, ServerIp);
+        }
+
+        public void ConnectClientViaAppServices()
+        {
+            var vm = new ClientViewModel();
+            _frame.Navigate(typeof(ClientPage), vm);
+            vm.ConnectViaAppServicesAsync(PackageFamilyName);
         }
 
         private string GetLocalIp()

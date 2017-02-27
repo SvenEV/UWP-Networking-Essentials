@@ -5,4 +5,12 @@
     xmlns:local="using:UwpNetworkingEssentials.ChatSample"
     RequestedTheme="Light">
 
+    <Application.Resources>
+
+        <DataTemplate x:Key="ChatMessageTemplate">
+            <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+        </DataTemplate>
+        
+    </Application.Resources>
+
 </Application>

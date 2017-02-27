@@ -3,10 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Windows.Storage.Streams;
 
 namespace UwpNetworkingEssentials
 {
@@ -34,7 +30,12 @@ namespace UwpNetworkingEssentials
         {
             _assembly = assembly;
             _jsonSettings = jsonSettings ?? _defaultJsonSettings;
-            _types = new[] { _assembly, GetType().GetTypeInfo().Assembly }
+            _types = new[]
+                {
+                    _assembly,
+                    GetType().GetTypeInfo().Assembly,
+                    typeof(int).GetTypeInfo().Assembly
+                }
                 .Distinct()
                 .SelectMany(asm => asm.GetTypes())
                 .ToDictionary(t => t.FullName);
@@ -51,55 +52,37 @@ namespace UwpNetworkingEssentials
         {
         }
 
-        public async Task<object> DeserializeAsync(DataReader reader, CancellationToken cancellationToken)
-        {
-            await reader.LoadAsync(sizeof(uint)).AsTask(cancellationToken);
-            var totalLength = reader.ReadUInt32();
-            await reader.LoadAsync(totalLength).AsTask(cancellationToken);
+        public string Serialize(object o) => JsonConvert.SerializeObject(new JsonMessage(o, _jsonSettings));
 
-            var json = reader.ReadString(totalLength);
-            var message = JsonConvert.DeserializeObject<Message>(json);
+        public object Deserialize(string json)
+        {
+            var message = JsonConvert.DeserializeObject<JsonMessage>(json);
 
             var type = LookupType(message.TypeName);
             var genericParams = message.GenericTypeParameters.Select(LookupType).ToArray();
             var finalType = genericParams.Length == 0 ? type : type.MakeGenericType(genericParams);
 
-            var value = JsonConvert.DeserializeObject(message.Value, finalType, _jsonSettings);
-            return value;
-        }
-
-        public async Task SerializeAsync(object o, DataWriter writer)
-        {
-            var json = JsonConvert.SerializeObject(new Message(o, _jsonSettings));
-
-            var bytes = Encoding.UTF8.GetBytes(json);
-            writer.WriteUInt32((uint)bytes.Length);
-            writer.WriteBytes(bytes);
-
-            await writer.StoreAsync();
+            return JsonConvert.DeserializeObject(message.Value, finalType, _jsonSettings);
         }
 
         private Type LookupType(string name)
         {
-            Type type;
-
-            if (_types.TryGetValue(name, out type))
-                return type;
-            else
-                throw new ArgumentException($"The type '{name}' could not be found");
+            return (_types.TryGetValue(name, out var type))
+                ? type
+                : throw new ArgumentException($"The type '{name}' could not be found");
         }
 
-        class Message
+        class JsonMessage
         {
             public string TypeName { get; set; }
             public string[] GenericTypeParameters { get; set; }
             public string Value { get; set; }
 
-            public Message()
+            public JsonMessage()
             {
             }
 
-            public Message(object value, JsonSerializerSettings jsonSettings)
+            public JsonMessage(object value, JsonSerializerSettings jsonSettings)
             {
                 Value = JsonConvert.SerializeObject(value, jsonSettings);
                 TypeName = value.GetType().FullName;

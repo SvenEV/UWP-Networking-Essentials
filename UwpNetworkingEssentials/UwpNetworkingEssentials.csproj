@@ -11,7 +11,7 @@
     <AssemblyName>UwpNetworkingEssentials</AssemblyName>
     <DefaultLanguage>de-DE</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>10.0.10586.0</TargetPlatformVersion>
+    <TargetPlatformVersion>10.0.15003.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -113,10 +113,31 @@
     </NuSpecFile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppServices\AppServiceHandshakeStatus.cs" />
+    <Compile Include="AppServices\ASConnection.cs" />
+    <Compile Include="AppServices\ASConnectionConnectResult.cs" />
+    <Compile Include="AppServices\ASConnectionListener.cs" />
+    <Compile Include="AppServices\AppServiceExtensionMethods.cs" />
+    <Compile Include="AppServices\ASDisconnectEventArgs.cs" />
+    <Compile Include="AppServices\ASRequest.cs" />
+    <Compile Include="AppServices\ASResponse.cs" />
+    <Compile Include="AppServices\ASResponseStatus.cs" />
+    <Compile Include="Bluetooth\BluetoothConnection.cs" />
+    <Compile Include="Bluetooth\BluetoothConnectionListener.cs" />
     <Compile Include="DefaultJsonSerializer.cs" />
+    <Compile Include="IConnectionListener.cs" />
+    <Compile Include="IConnectionReceiveEventArgs.cs" />
+    <Compile Include="IDisconnectEventArgs.cs" />
     <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="IConnection.cs" />
     <Compile Include="IObjectSerializer.cs" />
+    <Compile Include="IRequest.cs" />
+    <Compile Include="IResponse.cs" />
+    <Compile Include="IResponseStatus.cs" />
+    <Compile Include="MultiChannel\MultiChannelConnectionListener.cs" />
+    <Compile Include="ObjectSerializerExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rpc\DictionaryAccessor.cs" />
     <Compile Include="Rpc\IRpcClient.cs" />
     <Compile Include="Rpc\IRpcProxy.cs" />
     <Compile Include="Rpc\IRpcServer.cs" />
@@ -131,12 +152,20 @@
     <Compile Include="Rpc\RpcProxy.cs" />
     <Compile Include="Rpc\RpcReturn.cs" />
     <Compile Include="Rpc\RpcServer.cs" />
-    <Compile Include="StreamSocketConnection.cs" />
-    <Compile Include="StreamSocketConnectionCloseMessage.cs" />
-    <Compile Include="StreamSocketConnectionRequest.cs" />
-    <Compile Include="StreamSocketConnectionResponse.cs" />
+    <Compile Include="StreamSockets\StreamSocketConnection.cs" />
+    <Compile Include="ConnectionCloseMessage.cs" />
+    <Compile Include="ConnectionCloseReason.cs" />
+    <Compile Include="StreamSockets\StreamSocketConnectionListener.cs" />
+    <Compile Include="StreamSockets\StreamSocketConnectionReceiveEventArgs.cs" />
+    <Compile Include="ConnectionRequestMessage.cs" />
+    <Compile Include="ConnectionResponseMessage.cs" />
+    <Compile Include="StreamSockets\StreamSocketDisconnectEventArgs.cs" />
+    <Compile Include="StreamSockets\StreamSocketRequest.cs" />
+    <Compile Include="StreamSockets\StreamSocketResponse.cs" />
+    <Compile Include="StreamSockets\StreamSocketResponseStatus.cs" />
     <EmbeddedResource Include="Properties\UwpNetworkingEssentials.rd.xml" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
