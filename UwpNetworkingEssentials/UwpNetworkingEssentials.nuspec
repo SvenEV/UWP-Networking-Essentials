@@ -3,7 +3,7 @@
   <metadata>
     <id>UwpNetworkingEssentials</id>
     <title>UWP Networking Essentials</title>
-    <version>1.0.2</version>
+    <version>2.0.0</version>
     <authors>Sven Erik Vinkemeier</authors>
     <owners>Sven Erik Vinkemeier</owners>
     <licenseUrl>https://raw.githubusercontent.com/SvenEV/UWP-Networking-Essentials/master/LICENSE</licenseUrl>
@@ -11,27 +11,27 @@
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Simple and lightweight networking (including RPC) for Universal Windows Platform apps</description>
     <releaseNotes>Bug fixes and more detailed error messages</releaseNotes>
-    <copyright>Copyright 2016</copyright>
+    <copyright>Copyright 2016-2017</copyright>
     <tags>UWP Windows 10 Windows10 WinRT RPC Messaging ZeroMQ AMQP SignalR Queuing MQ</tags>
     <dependencies>
       <group targetFramework="uap10.0">
-        <dependency id="Microsoft.CSharp" version="4.0.0" />
-        <dependency id="Newtonsoft.Json" version="8.0.2" />
+        <dependency id="Microsoft.CSharp" version="4.0.1" />
+        <dependency id="Newtonsoft.Json" version="9.0.1" />
         <dependency id="Rx-Core" version="2.2.5" />
         <dependency id="Rx-Linq" version="2.2.5" />
-        <dependency id="System.Collections" version="4.0.10" />
-        <dependency id="System.Diagnostics.Debug" version="4.0.10" />
-        <dependency id="System.Dynamic.Runtime" version="4.0.10" />
-        <dependency id="System.Linq" version="4.0.0" />
-        <dependency id="System.Reflection" version="4.0.10" />
-        <dependency id="System.Reflection.TypeExtensions" version="4.0.0" />
-        <dependency id="System.Runtime" version="4.0.20" />
-        <dependency id="System.Runtime.InteropServices" version="4.0.20" />
-        <dependency id="System.Runtime.InteropServices.WindowsRuntime" version="4.0.0" />
-        <dependency id="System.Runtime.WindowsRuntime" version="4.0.10" />
-        <dependency id="System.Text.Encoding" version="4.0.10" />
-        <dependency id="System.Threading" version="4.0.10" />
-        <dependency id="System.Threading.Tasks" version="4.0.10" />
+        <dependency id="System.Collections" version="4.0.11" />
+        <dependency id="System.Diagnostics.Debug" version="4.0.11" />
+        <dependency id="System.Dynamic.Runtime" version="4.0.11" />
+        <dependency id="System.Linq" version="4.1.0" />
+        <dependency id="System.Reflection" version="4.1.0" />
+        <dependency id="System.Reflection.TypeExtensions" version="4.1.0" />
+        <dependency id="System.Runtime" version="4.1.0" />
+        <dependency id="System.Runtime.InteropServices" version="4.1.0" />
+        <dependency id="System.Runtime.InteropServices.WindowsRuntime" version="4.0.1" />
+        <dependency id="System.Runtime.WindowsRuntime" version="4.0.11" />
+        <dependency id="System.Text.Encoding" version="4.0.11" />
+        <dependency id="System.Threading" version="4.0.11" />
+        <dependency id="System.Threading.Tasks" version="4.0.11" />
       </group>
     </dependencies>
   </metadata>
