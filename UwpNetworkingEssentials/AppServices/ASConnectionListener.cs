@@ -1,53 +1,60 @@
 ﻿using System;
-using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.AppService;
+using Windows.ApplicationModel.Background;
 
 namespace UwpNetworkingEssentials.AppServices
 {
     public class ASConnectionListener : ConnectionListenerBase<ASConnection>
     {
-        private readonly Subject<ASConnection> _connectionReceived = new Subject<ASConnection>();
         private readonly IObjectSerializer _serializer;
-        private bool _isRunning = false;
-
-        public override IObservable<ASConnection> ConnectionReceived => _connectionReceived;
 
         public ASConnectionListener(IObjectSerializer serializer)
         {
             _serializer = serializer;
         }
 
-        public async Task<bool> HandleBackgroundActivationAsync(BackgroundActivatedEventArgs args)
+        /// <summary>
+        /// Call this method in
+        /// <see cref="Windows.UI.Xaml.Application.OnBackgroundActivated(BackgroundActivatedEventArgs)"/>
+        /// (single process model) or
+        /// <see cref="IBackgroundTask.Run(IBackgroundTaskInstance)"/> (multi process model)
+        /// to accept an incoming app service connection.
+        /// </summary>
+        /// <param name="taskInstance">Background task instance</param>
+        /// <returns>
+        /// True if the background activation event has been handled by this <see cref="ASConnectionListener"/>.
+        /// This is the case if the connection listener is started and the task instance contains app service activation
+        /// details of type <see cref="AppServiceTriggerDetails"/>. If the listener is not started or the activation is
+        /// of a different kind, false is returned.
+        /// </returns>
+        public async Task<bool> HandleBackgroundActivationAsync(IBackgroundTaskInstance taskInstance)
         {
-            if (!_isRunning)
-                return false; // activation event not handled by AppServiceConnectionListener
-
-            if (args.TaskInstance.TriggerDetails is AppServiceTriggerDetails e)
+            using (await _mutex.LockAsync())
             {
-                var deferral = args.TaskInstance.GetDeferral();
+                if (_status == ConnectionListenerStatus.Disposed)
+                    throw new ObjectDisposedException(GetType().FullName);
 
-                var connection = await ASConnection.AcceptConnectionAsync(e, deferral, _serializer);
-                if (connection != null)
-                    _connectionReceived.OnNext(connection);
+                if (_status == ConnectionListenerStatus.Inactive)
+                    return false; // not listening => activation event not handled
 
-                return true;
+                if (taskInstance.TriggerDetails is AppServiceTriggerDetails e)
+                {
+                    var deferral = taskInstance.GetDeferral();
+
+                    var connection = await ASConnection.AcceptConnectionAsync(e, deferral, _serializer);
+                    if (connection != null)
+                        _connectionReceived.OnNext(connection);
+
+                    return true;
+                }
+
+                return false;
             }
-
-            return false;
         }
 
-        public override Task DisposeAsync()
-        {
-            _isRunning = false;
-            return Task.CompletedTask;
-        }
+        protected override Task DisposeCoreAsync() => Task.CompletedTask; // nothing to do
 
-        public override Task StartAsync()
-        {
-            _isRunning = true;
-            return Task.CompletedTask;
-        }
+        protected override Task StartCoreAsync() => Task.CompletedTask; // nothing to do
     }
 }

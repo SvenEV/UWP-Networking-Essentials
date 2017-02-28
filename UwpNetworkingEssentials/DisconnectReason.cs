@@ -1,6 +1,6 @@
 ﻿namespace UwpNetworkingEssentials
 {
-    public enum ConnectionCloseReason
+    public enum DisconnectReason
     {
         /// <summary>
         /// The connection has been closed without a known reason.

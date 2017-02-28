@@ -39,18 +39,18 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             _frame.Navigate(typeof(ServerPage), vm);
         }
 
-        public void ConnectClientViaStreamSockets()
+        public async void ConnectClientViaStreamSockets()
         {
             var vm = new ClientViewModel();
             _frame.Navigate(typeof(ClientPage), vm);
-            vm.ConnectViaStreamSocketsAsync(Port, ServerIp);
+            await vm.ConnectViaStreamSocketsAsync(Port, ServerIp);
         }
 
-        public void ConnectClientViaAppServices()
+        public async void ConnectClientViaAppServices()
         {
             var vm = new ClientViewModel();
             _frame.Navigate(typeof(ClientPage), vm);
-            vm.ConnectViaAppServicesAsync(PackageFamilyName);
+            await vm.ConnectViaAppServicesAsync(PackageFamilyName);
         }
 
         private string GetLocalIp()

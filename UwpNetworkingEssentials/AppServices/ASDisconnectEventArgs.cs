@@ -2,7 +2,7 @@
 {
     public class ASDisconnectEventArgs : DisconnectEventArgsBase<ASConnection>
     {
-        public ASDisconnectEventArgs(ASConnection connection, ConnectionCloseReason reason) :
+        public ASDisconnectEventArgs(ASConnection connection, DisconnectReason reason) :
             base(connection, reason)
         {
         }

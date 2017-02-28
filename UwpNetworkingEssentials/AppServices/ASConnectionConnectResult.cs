@@ -14,7 +14,10 @@ namespace UwpNetworkingEssentials.AppServices
 
         public ASConnection Connection { get; }
 
-        public ASConnectionConnectResult(AppServiceConnectionStatus connectionStatus, AppServiceHandshakeStatus handshakeStatus, ASConnection connection)
+        public ASConnectionConnectResult(
+            AppServiceConnectionStatus connectionStatus,
+            AppServiceHandshakeStatus handshakeStatus,
+            ASConnection connection)
         {
             ConnectionStatus = connectionStatus;
             HandshakeStatus = handshakeStatus;

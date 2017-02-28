@@ -20,7 +20,8 @@ namespace UwpNetworkingEssentials.Rpc
         private readonly IReadOnlyDictionary<TKey, TValue> _dictionary;
         private readonly Func<TValue, TSelectedValue> _selectValue;
 
-        public DictionaryAccessor(IReadOnlyDictionary<TKey, TValue> dictionary, Func<TValue, TSelectedValue> selectValue)
+        public DictionaryAccessor(
+            IReadOnlyDictionary<TKey, TValue> dictionary, Func<TValue, TSelectedValue> selectValue)
         {
             _dictionary = dictionary;
             _selectValue = selectValue;

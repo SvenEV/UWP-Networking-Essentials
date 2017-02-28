@@ -7,22 +7,23 @@ namespace UwpNetworkingEssentials.AppServices
     {
         private readonly ASConnection _connection;
         private readonly AppServiceRequest _internalRequest;
-        private readonly AppServiceDeferral _deferral;
+        private readonly AppServiceDeferral _internalRequestDeferral;
 
         public override object Message { get; }
 
-        public ASRequest(AppServiceRequest internalRequest, AppServiceDeferral deferral, ASConnection connection)
+        public ASRequest(AppServiceRequest internalRequest, AppServiceDeferral internalRequestDeferral,
+            ASConnection connection)
         {
             _connection = connection;
             _internalRequest = internalRequest;
-            _deferral = deferral;
+            _internalRequestDeferral = internalRequestDeferral;
             Message = _connection._serializer.DeserializeFromValueSet(internalRequest.Message);
         }
 
-        public override async Task<ASResponseStatus> SendResponseAsync(object message)
+        protected override async Task<ASResponseStatus> SendResponseCoreAsync(object message)
         {
             var result = await _internalRequest.SendResponseAsync(message, _connection._serializer);
-            _deferral.Complete();
+            _internalRequestDeferral.Complete();
             return result;
         }
     }

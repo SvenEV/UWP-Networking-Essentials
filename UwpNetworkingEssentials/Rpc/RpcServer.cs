@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,8 +10,10 @@ namespace UwpNetworkingEssentials.Rpc
 
     public class RpcServer : IRpcServer
     {
+        private readonly Dictionary<string, RpcConnectionInfo> _connections =
+            new Dictionary<string, RpcConnectionInfo>();
+
         private readonly IConnectionListener _listener;
-        private readonly Dictionary<string, RpcConnectionInfo> _connections = new Dictionary<string, RpcConnectionInfo>();
         private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
         private readonly IDisposable _connectionReceivedSubscription;
         private readonly object _rpcTarget;
@@ -30,7 +31,7 @@ namespace UwpNetworkingEssentials.Rpc
                 lock (_lock)
                 {
                     if (_isDisposed)
-                        throw new ObjectDisposedException(nameof(RpcServer));
+                        throw new ObjectDisposedException(GetType().FullName);
 
                     return new RpcMultiProxy(_connections.Values.Select(c => c.Connection._proxy));
                 }
@@ -69,7 +70,7 @@ namespace UwpNetworkingEssentials.Rpc
             lock (_lock)
             {
                 if (_isDisposed)
-                    throw new ObjectDisposedException(nameof(RpcServer));
+                    throw new ObjectDisposedException(GetType().FullName);
 
                 return _connections[connectionId].Connection.Proxy;
             }
@@ -83,7 +84,9 @@ namespace UwpNetworkingEssentials.Rpc
                 if (_isDisposed)
                     throw new ObjectDisposedException(nameof(RpcServer));
 
-                return new RpcMultiProxy(_connections.Values.Where(c => c.Connection.Id != connectionId).Select(c => c.Connection._proxy));
+                return new RpcMultiProxy(_connections.Values
+                    .Where(c => c.Connection.Id != connectionId)
+                    .Select(c => c.Connection._proxy));
             }
         }
 
@@ -157,7 +160,8 @@ namespace UwpNetworkingEssentials.Rpc
 
             public RpcConnection Connection { get; }
 
-            public RpcConnectionInfo(RpcConnection connection, IDisposable requestReceivedSubscription, IDisposable disconnectedSubscription)
+            public RpcConnectionInfo(RpcConnection connection, IDisposable requestReceivedSubscription,
+                IDisposable disconnectedSubscription)
             {
                 Connection = connection;
                 _requestReceivedSubscription = requestReceivedSubscription;

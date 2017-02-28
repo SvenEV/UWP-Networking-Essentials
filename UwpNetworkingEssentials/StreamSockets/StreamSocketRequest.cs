@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
 using System.Threading.Tasks;
 
 namespace UwpNetworkingEssentials.StreamSockets
@@ -7,7 +6,6 @@ namespace UwpNetworkingEssentials.StreamSockets
     public class StreamSocketRequest : RequestBase<StreamSocketResponseStatus>
     {
         private readonly StreamSocketConnection _connection;
-        private bool _hasResponded;
 
         /// <summary>
         /// Request identifier. This value should be unique across all requests issued by the
@@ -24,14 +22,9 @@ namespace UwpNetworkingEssentials.StreamSockets
             _connection = connection;
         }
 
-        public override async Task<StreamSocketResponseStatus> SendResponseAsync(object responseMessage)
+        protected override async Task<StreamSocketResponseStatus> SendResponseCoreAsync(object responseMessage)
         {
-            if (_hasResponded)
-                throw new InvalidOperationException("This request has already been responded to");
-
             await _connection.SendResponseAsync(RequestId, responseMessage);
-            _hasResponded = true;
-
             return new StreamSocketResponseStatus();
         }
     }

@@ -12,7 +12,8 @@
         new TResponseStatus Status { get; }
     }
 
-    public abstract class ResponseBase<TResponseStatus> : IResponse<TResponseStatus> where TResponseStatus : IResponseStatus
+    public abstract class ResponseBase<TResponseStatus> : IResponse<TResponseStatus>
+        where TResponseStatus : IResponseStatus
     {
         public abstract object Message { get; }
 

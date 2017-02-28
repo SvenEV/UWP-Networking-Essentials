@@ -9,18 +9,24 @@ namespace UwpNetworkingEssentials.Rpc
     {
         public static async void HandleMethodCall(RpcConnection connection, IRequest rpcCallRequest, object rpcTarget)
         {
-            try
+            using (var deferral = rpcCallRequest.GetDeferral())
             {
-                if (rpcTarget == null)
-                    await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
+                try
+                {
+                    if (rpcTarget == null)
+                    {
+                        await rpcCallRequest.SendResponseAsync(
+                            RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
+                    }
 
-                var call = (RpcCall)rpcCallRequest.Message;
-                var result = await InvokeMethodAsync(rpcTarget, connection, call);
-                await rpcCallRequest.SendResponseAsync(result);
-            }
-            catch
-            {
-                await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("Unknown error"));
+                    var call = (RpcCall)rpcCallRequest.Message;
+                    var result = await InvokeMethodAsync(rpcTarget, connection, call);
+                    await rpcCallRequest.SendResponseAsync(result);
+                }
+                catch
+                {
+                    await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("Unknown error"));
+                }
             }
         }
 
@@ -35,14 +41,20 @@ namespace UwpNetworkingEssentials.Rpc
             var method = rpcTarget.GetType().GetMethod(call.MethodName);
 
             if (method == null)
-                return RpcReturn.Faulted($"No method with name '{call.MethodName}' could be found (attempted call: {call.ToString()})");
+            {
+                return RpcReturn.Faulted(
+                     $"No method with name '{call.MethodName}' could be found (attempted call: {call.ToString()})");
+            }
 
             // Parameter check
             var formalParams = method.GetParameters();
             var actualParams = call.Parameters.ToList();
 
             if (call.Parameters.Length > formalParams.Length)
-                return RpcReturn.Faulted($"Parameter mismatch: Too many arguments specified (attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
+            {
+                return RpcReturn.Faulted("Parameter mismatch: Too many arguments specified " +
+                    $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
+            }
 
             for (var i = 0; i < formalParams.Length; i++)
             {
@@ -55,7 +67,10 @@ namespace UwpNetworkingEssentials.Rpc
                 }
                 else if (!formalParam.ParameterType.IsAssignableFrom(actualParam.GetType()))
                 {
-                    return RpcReturn.Faulted($"Parameter mismatch: Got value of type '{actualParam.GetType().FullName}' for parameter '{formalParam.ParameterType.FullName} {formalParam.Name}' (attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
+                    return RpcReturn.Faulted("Parameter mismatch: Got value of type " +
+                        $"'{actualParam.GetType().FullName}' for parameter " +
+                        $"'{formalParam.ParameterType.FullName} {formalParam.Name}' " +
+                        $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
                 }
 
                 if (formalParam.CustomAttributes.Any(a => a.AttributeType == typeof(RpcCallerAttribute)) &&
@@ -66,7 +81,8 @@ namespace UwpNetworkingEssentials.Rpc
                 }
                 else if (actualParam == Type.Missing && !formalParam.IsOptional)
                 {
-                    return RpcReturn.Faulted("Parameter mismatch: Not enough parameters specified (attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
+                    return RpcReturn.Faulted("Parameter mismatch: Not enough parameters specified " +
+                        $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
                 }
             }
 

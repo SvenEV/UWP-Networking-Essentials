@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.StreamSockets;
@@ -13,23 +12,14 @@ namespace UwpNetworkingEssentials.AppServices
     {
         private readonly AppServiceConnection _connection;
         private readonly BackgroundTaskDeferral _connectionDeferral;
-        private readonly Subject<ASRequest> _requestReceived = new Subject<ASRequest>();
-        private readonly Subject<ASDisconnectEventArgs> _disconnected = new Subject<ASDisconnectEventArgs>();
-        private readonly SemaphoreSlim _sema = new SemaphoreSlim(1);
         internal readonly IObjectSerializer _serializer;
-        private bool _isDisposed = false;
-
-        public override string Id { get; }
-
-        public override IObservable<ASRequest> RequestReceived => _requestReceived;
-
-        public override IObservable<ASDisconnectEventArgs> Disconnected => _disconnected;
+        private DisconnectReason _disconnectReason = DisconnectReason.Unknown;
 
         public bool IsRemoteSystemConnection { get; }
 
-        private ASConnection(string id, AppServiceConnection connection, BackgroundTaskDeferral connectionDeferral, bool isRemoteSystemConnection, IObjectSerializer serializer)
+        private ASConnection(string id, AppServiceConnection connection, BackgroundTaskDeferral connectionDeferral,
+            bool isRemoteSystemConnection, IObjectSerializer serializer) : base(id)
         {
-            Id = id;
             _connection = connection;
             _connection.RequestReceived += OnRequestReceived;
             _connection.ServiceClosed += OnUnderlyingConnectionClosed;
@@ -38,30 +28,41 @@ namespace UwpNetworkingEssentials.AppServices
             IsRemoteSystemConnection = isRemoteSystemConnection;
         }
 
-        private void OnUnderlyingConnectionClosed(AppServiceConnection sender, AppServiceClosedEventArgs args)
+        private async void OnUnderlyingConnectionClosed(AppServiceConnection sender, AppServiceClosedEventArgs args)
         {
-            if (!_isDisposed)
-                DisposeInternal(ConnectionCloseReason.RemotePeerDisconnected);
-        }
-
-        private void OnRequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
-        {
-            var request = new ASRequest(args.Request, args.GetDeferral(), this);
-
-            switch (request.Message)
+            switch (args.Status)
             {
-                case ConnectionCloseMessage connectionCloseMessage:
+                case AppServiceClosedStatus.Completed:
+                    _disconnectReason = DisconnectReason.RemotePeerDisconnected;
+                    break;
 
+                case AppServiceClosedStatus.Canceled:
+                case AppServiceClosedStatus.ResourceLimitsExceeded:
+                    _disconnectReason = DisconnectReason.UnexpectedDisconnect;
                     break;
 
                 default:
-                    _requestReceived.OnNext(request);
+                    _disconnectReason = DisconnectReason.Unknown;
                     break;
             }
 
+            await DisposeAsync(); // TODO: Potentially dangerous 'await' in 'async void' method
         }
 
-        public static async Task<ASConnection> AcceptConnectionAsync(AppServiceTriggerDetails e, BackgroundTaskDeferral connectionDeferral, IObjectSerializer serializer)
+        private async void OnRequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
+        {
+            var request = new ASRequest(args.Request, args.GetDeferral(), this);
+
+            _requestReceived.OnNext(request);
+            await request.WaitForDeferralsAsync();
+
+            // if no one responded to the message, respond with an empty message now
+            if (!request.HasResponded)
+                await request.SendResponseAsync(null);
+        }
+
+        public static async Task<ASConnection> AcceptConnectionAsync(AppServiceTriggerDetails e,
+            BackgroundTaskDeferral connectionDeferral, IObjectSerializer serializer)
         {
             // Receive connection request, send connection response
             AppServiceRequest request = null;
@@ -77,11 +78,13 @@ namespace UwpNetworkingEssentials.AppServices
             if (message is ConnectionRequestMessage connectionRequest)
             {
                 // Accept connection request
-                var connectionId = "AS_" + Guid.NewGuid().ToString();
+                var connectionId = "AS_" + Guid.NewGuid();
                 var connectionResponse = new ConnectionResponseMessage(connectionId);
                 await request.SendResponseAsync(serializer.SerializeToValueSet(connectionResponse));
                 deferral.Complete();
-                return new ASConnection(connectionId, e.AppServiceConnection, connectionDeferral, e.IsRemoteSystemConnection, serializer);
+                return new ASConnection(
+                    connectionId, e.AppServiceConnection, connectionDeferral,
+                    e.IsRemoteSystemConnection, serializer);
             }
             else
             {
@@ -102,18 +105,20 @@ namespace UwpNetworkingEssentials.AppServices
             }
         }
 
-        public static Task<ASConnectionConnectResult> ConnectLocallyAsync(string appServiceName, string packageFamilyName, IObjectSerializer serializer)
+        public static Task<ASConnectionConnectResult> ConnectLocallyAsync(string appServiceName,
+            string packageFamilyName, IObjectSerializer serializer)
         {
             return ConnectInternalAsync(appServiceName, packageFamilyName, null, serializer);
         }
 
-        public static Task<ASConnectionConnectResult> ConnectRemotelyAsync(string appServiceName, string packageFamilyName,
-            RemoteSystem remoteSystem, IObjectSerializer serializer)
+        public static Task<ASConnectionConnectResult> ConnectRemotelyAsync(string appServiceName,
+            string packageFamilyName, RemoteSystem remoteSystem, IObjectSerializer serializer)
         {
             return ConnectInternalAsync(appServiceName, packageFamilyName, remoteSystem, serializer);
         }
 
-        private static async Task<ASConnectionConnectResult> ConnectInternalAsync(string appServiceName, string packageFamilyName, RemoteSystem remoteSystem, IObjectSerializer serializer)
+        private static async Task<ASConnectionConnectResult> ConnectInternalAsync(string appServiceName,
+            string packageFamilyName, RemoteSystem remoteSystem, IObjectSerializer serializer)
         {
             var connection = new AppServiceConnection
             {
@@ -140,50 +145,35 @@ namespace UwpNetworkingEssentials.AppServices
                 responseObject.IsSuccessful;
 
             if (!success)
-                return new ASConnectionConnectResult(AppServiceConnectionStatus.Success, AppServiceHandshakeStatus.ConnectionRequestFailure, null);
+                return new ASConnectionConnectResult(
+                    AppServiceConnectionStatus.Success, AppServiceHandshakeStatus.ConnectionRequestFailure, null);
 
-            var asConnection = new ASConnection(((ConnectionResponseMessage)response.Message).ConnectionId, connection, null, isRemoteSystemConnection, serializer);
-            return new ASConnectionConnectResult(AppServiceConnectionStatus.Success, AppServiceHandshakeStatus.Success, asConnection);
+            var asConnection = new ASConnection(
+                ((ConnectionResponseMessage)response.Message).ConnectionId,
+                connection, null, isRemoteSystemConnection, serializer);
+
+            return new ASConnectionConnectResult(
+                AppServiceConnectionStatus.Success,
+                AppServiceHandshakeStatus.Success,
+                asConnection);
         }
 
-        public override async Task DisposeAsync()
+        protected override Task CloseCoreAsync()
         {
-            await _sema.WaitAsync();
-
-            if (_isDisposed)
-                return;
-
-            _isDisposed = true;
-
-            // Inform peer that we are closing the connection
-            // (semaphore is disposed in this call)
-            DisposeInternal(ConnectionCloseReason.LocalPeerDisconnected);
+            _disconnectReason = DisconnectReason.LocalPeerDisconnected;
+            return Task.CompletedTask;
         }
 
-        public override async Task<ASResponse> SendMessageAsync(object message)
+        protected override async Task<ASResponse> SendMessageCoreAsync(object message)
         {
-            await _sema.WaitAsync();
-            try
-            {
-                if (_isDisposed)
-                    throw new ObjectDisposedException(nameof(StreamSocketConnection));
-
-                return await _connection.SendMessageAsync(message, _serializer);
-            }
-            finally
-            {
-                _sema.Release();
-            }
+            return await _connection.SendMessageAsync(message, _serializer);
         }
 
-        private void DisposeInternal(ConnectionCloseReason connectionCloseReason)
+        protected override void DisposeCore()
         {
-            _disconnected.OnNext(new ASDisconnectEventArgs(this, connectionCloseReason));
-            _disconnected.OnCompleted();
-            _isDisposed = true;
+            _disconnected.OnNext(new ASDisconnectEventArgs(this, _disconnectReason));
             _connection.Dispose();
             _connectionDeferral?.Complete();
-            _requestReceived.OnCompleted();
         }
     }
 }

@@ -31,12 +31,16 @@ namespace UwpNetworkingEssentials.Rpc
             if (response.Message is RpcReturn returnMessage)
             {
                 if (!returnMessage.IsSuccessful)
-                    throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed ({returnMessage.Error ?? "no details"})");
+                {
+                    throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed " +
+                        $"({returnMessage.Error ?? "no details"})");
+                }
 
                 return returnMessage.Value;
             }
 
-            throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed (invalid response message)");
+            throw new InvalidOperationException(
+                $"The remote procedure call to '{call.MethodName}' failed (invalid response message)");
         }
     }
 }

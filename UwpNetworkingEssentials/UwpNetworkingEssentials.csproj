@@ -105,6 +105,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <None Include="app.config" />
     <None Include="project.json" />
     <None Include="UwpNetworkingEssentials.nuspec" />
     <!-- Specify the path to the nuspec file (for NuSpec.ReferenceGenerator)-->
@@ -124,9 +125,14 @@
     <Compile Include="AppServices\ASResponseStatus.cs" />
     <Compile Include="Bluetooth\BluetoothConnection.cs" />
     <Compile Include="Bluetooth\BluetoothConnectionListener.cs" />
+    <Compile Include="ConnectionListenerStatus.cs" />
+    <Compile Include="ConnectionStatus.cs" />
+    <Compile Include="Debug\DebugConnectionListener.cs" />
     <Compile Include="DefaultJsonSerializer.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="IConnectionListener.cs" />
     <Compile Include="IConnectionReceiveEventArgs.cs" />
+    <Compile Include="IDeferrable.cs" />
     <Compile Include="IDisconnectEventArgs.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="IConnection.cs" />
@@ -153,8 +159,8 @@
     <Compile Include="Rpc\RpcReturn.cs" />
     <Compile Include="Rpc\RpcServer.cs" />
     <Compile Include="StreamSockets\StreamSocketConnection.cs" />
-    <Compile Include="ConnectionCloseMessage.cs" />
-    <Compile Include="ConnectionCloseReason.cs" />
+    <Compile Include="StreamSockets\StreamSocketConnectionCloseMessage.cs" />
+    <Compile Include="DisconnectReason.cs" />
     <Compile Include="StreamSockets\StreamSocketConnectionListener.cs" />
     <Compile Include="StreamSockets\StreamSocketConnectionReceiveEventArgs.cs" />
     <Compile Include="ConnectionRequestMessage.cs" />

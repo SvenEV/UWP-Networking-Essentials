@@ -1,6 +1,5 @@
 ﻿using GalaSoft.MvvmLight;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.AppServices;
@@ -32,7 +31,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             _serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
 
             _multiChannelListener = new MultiChannelConnectionListener();
-            _multiChannelListener.StartAsync();
+            _multiChannelListener.StartAsync().Wait();
 
             Server = new RpcServer(_multiChannelListener, this);
             Messages.Add($"Server started");

@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
 namespace UwpNetworkingEssentials
@@ -17,14 +19,15 @@ namespace UwpNetworkingEssentials
         /// <summary>
         /// Begins listening for incoming connections.
         /// </summary>
-        /// <returns></returns>
+        /// <remarks>
+        /// Further calls to <see cref="StartAsync"/> while the listener is active are allowed and have no effect.
+        /// </remarks>
+        /// <exception cref="ObjectDisposedException">The object has been disposed</exception>
         Task StartAsync();
 
         /// <summary>
-        /// Stops listening for incoming connections.
-        /// After disposal the listener cannot be started again.     TODO: Does this make sense?
+        /// Stops listening for incoming connections. After disposal the listener cannot be started again.
         /// </summary>
-        /// <returns></returns>
         Task DisposeAsync();
     }
 
@@ -33,21 +36,60 @@ namespace UwpNetworkingEssentials
         new IObservable<TConnection> ConnectionReceived { get; }
     }
 
-    public abstract class ConnectionListenerBase<TConnection> : IConnectionListener<TConnection> where TConnection : IConnection
+    /// <summary>
+    /// The base class for <see cref="IConnectionListener"/> implementations.
+    /// </summary>
+    /// <typeparam name="TConnection"></typeparam>
+    public abstract class ConnectionListenerBase<TConnection> : IConnectionListener<TConnection>
+        where TConnection : IConnection
     {
         private readonly IObservable<IConnection> _connectionReceivedNonGeneric;
 
-        public abstract IObservable<TConnection> ConnectionReceived { get; }
+        protected readonly Subject<TConnection> _connectionReceived = new Subject<TConnection>();
+        protected readonly AsyncLock _mutex = new AsyncLock(); // mutex protecting _status
+        protected ConnectionListenerStatus _status = ConnectionListenerStatus.Inactive;
+
+        public IObservable<TConnection> ConnectionReceived => _connectionReceived;
 
         IObservable<IConnection> IConnectionListener.ConnectionReceived => _connectionReceivedNonGeneric;
 
-        public abstract Task DisposeAsync();
+        public async Task DisposeAsync()
+        {
+            using (await _mutex.LockAsync())
+            {
+                if (_status != ConnectionListenerStatus.Disposed)
+                {
+                    await DisposeCoreAsync();
+                    _connectionReceived.OnCompleted();
+                    _status = ConnectionListenerStatus.Disposed;
+                }
+            }
+        }
 
-        public abstract Task StartAsync();
+        public async Task StartAsync()
+        {
+            using (await _mutex.LockAsync())
+            {
+                if (_status == ConnectionListenerStatus.Disposed)
+                    throw new ObjectDisposedException(GetType().FullName);
+
+                if (_status == ConnectionListenerStatus.Inactive)
+                {
+                    await StartCoreAsync();
+                    _status = ConnectionListenerStatus.Active;
+                }
+            }
+        }
 
         public ConnectionListenerBase()
         {
             _connectionReceivedNonGeneric = ConnectionReceived.Select(conn => (IConnection)conn);
         }
+
+        // will be called at most once
+        protected abstract Task DisposeCoreAsync();
+
+        // will be called at most once
+        protected abstract Task StartCoreAsync();
     }
 }

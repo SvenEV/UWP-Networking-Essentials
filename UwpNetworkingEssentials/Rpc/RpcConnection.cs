@@ -28,7 +28,7 @@ namespace UwpNetworkingEssentials.Rpc
         /// <returns></returns>
         public async Task DisposeAsync()
         {
-            await UnderlyingConnection.DisposeAsync();
+            await UnderlyingConnection.CloseAsync();
         }
     }
 }

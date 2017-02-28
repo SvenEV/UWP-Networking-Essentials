@@ -44,7 +44,7 @@ namespace UwpNetworkingEssentials.ChatSample
         protected override async void OnBackgroundActivated(BackgroundActivatedEventArgs args)
         {
             if (TheASConnectionListener == null ||
-                !await TheASConnectionListener.HandleBackgroundActivationAsync(args))
+                !await TheASConnectionListener.HandleBackgroundActivationAsync(args.TaskInstance))
             {
                 // Handle other stuff
             }

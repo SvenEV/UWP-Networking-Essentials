@@ -13,13 +13,10 @@ namespace UwpNetworkingEssentials.Bluetooth
     /// </summary>
     public class BluetoothConnectionListener : ConnectionListenerBase<StreamSocketConnection>
     {
-        private readonly Subject<StreamSocketConnection> _connectionReceived = new Subject<StreamSocketConnection>();
         private readonly StreamSocketListener _listener = new StreamSocketListener();
         private readonly IObjectSerializer _serializer;
         private readonly Guid _serviceUuid;
         private RfcommServiceProvider _serviceProvider;
-
-        public override IObservable<StreamSocketConnection> ConnectionReceived => _connectionReceived;
 
         public BluetoothConnectionListener(Guid serviceUuid, IObjectSerializer serializer)
         {
@@ -28,21 +25,21 @@ namespace UwpNetworkingEssentials.Bluetooth
             _listener.ConnectionReceived += OnConnectionReceived;
         }
 
-        public override Task DisposeAsync()
+        protected override Task DisposeCoreAsync()
         {
             _serviceProvider.StopAdvertising();
             _listener.Dispose();
-            _connectionReceived.OnCompleted();
             return Task.CompletedTask;
         }
 
-        public override async Task StartAsync()
+        protected override async Task StartCoreAsync()
         {
             var serviceId = RfcommServiceId.FromUuid(_serviceUuid);
             _serviceProvider = await RfcommServiceProvider.CreateAsync(serviceId);
 
             _listener.ConnectionReceived += OnConnectionReceived;
-            await _listener.BindServiceNameAsync(serviceId.AsString(), SocketProtectionLevel.BluetoothEncryptionAllowNullAuthentication);
+            await _listener.BindServiceNameAsync(serviceId.AsString(),
+                SocketProtectionLevel.BluetoothEncryptionAllowNullAuthentication);
             
             InitializeServiceSdpAttributes(_serviceProvider);
             _serviceProvider.StartAdvertising(_listener, true);
@@ -67,10 +64,13 @@ namespace UwpNetworkingEssentials.Bluetooth
             sdpWriter.WriteString(BluetoothConnection.SdpServiceName);
 
             // Set the SDP Attribute on the RFCOMM Service Provider.
-            rfcommProvider.SdpRawAttributes.Add(BluetoothConnection.SdpServiceNameAttributeId, sdpWriter.DetachBuffer());
+            rfcommProvider.SdpRawAttributes.Add(
+                BluetoothConnection.SdpServiceNameAttributeId,
+                sdpWriter.DetachBuffer());
         }
 
-        private async void OnConnectionReceived(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
+        private async void OnConnectionReceived(StreamSocketListener sender,
+            StreamSocketListenerConnectionReceivedEventArgs args)
         {
             try
             {

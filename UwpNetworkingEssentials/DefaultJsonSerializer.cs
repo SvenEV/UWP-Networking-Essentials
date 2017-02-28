@@ -20,12 +20,8 @@ namespace UwpNetworkingEssentials
         /// <summary>
         /// Initializes a new default serializer.
         /// </summary>
-        /// <param name="assembly">
-        /// The assembly that is used for type lookup and instantiation
-        /// </param>
-        /// <param name="jsonSettings">
-        /// JSON serializer settings that are considered during object serialization.
-        /// </param>
+        /// <param name="assembly">The assembly that is used for type lookup and instantiation</param>
+        /// <param name="jsonSettings">JSON serializer settings that are considered during object serialization</param>
         public DefaultJsonSerializer(Assembly assembly, JsonSerializerSettings jsonSettings)
         {
             _assembly = assembly;
@@ -42,12 +38,9 @@ namespace UwpNetworkingEssentials
         }
 
         /// <summary>
-        /// Initializes a new default serializer with default JSON
-        /// serialization settings.
+        /// Initializes a new default serializer with default JSON serialization settings.
         /// </summary>
-        /// <param name="assembly">
-        /// The assembly that is used for type lookup and instantiation
-        /// </param>
+        /// <param name="assembly">The assembly that is used for type lookup and instantiation</param>
         public DefaultJsonSerializer(Assembly assembly) : this(assembly, _defaultJsonSettings)
         {
         }
@@ -57,6 +50,9 @@ namespace UwpNetworkingEssentials
         public object Deserialize(string json)
         {
             var message = JsonConvert.DeserializeObject<JsonMessage>(json);
+
+            if (message.IsEmpty)
+                return null;
 
             var type = LookupType(message.TypeName);
             var genericParams = message.GenericTypeParameters.Select(LookupType).ToArray();
@@ -78,12 +74,17 @@ namespace UwpNetworkingEssentials
             public string[] GenericTypeParameters { get; set; }
             public string Value { get; set; }
 
+            public bool IsEmpty => TypeName == null || Value == null;
+
             public JsonMessage()
             {
             }
 
             public JsonMessage(object o, JsonSerializerSettings jsonSettings)
             {
+                if (o == null)
+                    return;
+
                 Value = JsonConvert.SerializeObject(o, jsonSettings);
 
                 var type = o.GetType();

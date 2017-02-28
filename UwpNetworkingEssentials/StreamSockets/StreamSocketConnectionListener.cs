@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using Windows.Networking.Sockets;
 
@@ -8,15 +7,12 @@ namespace UwpNetworkingEssentials.StreamSockets
     public class StreamSocketConnectionListener : ConnectionListenerBase<StreamSocketConnection>
     {
         private readonly StreamSocketListener _listener = new StreamSocketListener();
-        private readonly Subject<StreamSocketConnection> _connectionReceived = new Subject<StreamSocketConnection>();
         private readonly IObjectSerializer _serializer;
 
         /// <summary>
         /// Gets the local port that is listened on.
         /// </summary>
         public string Port { get; }
-
-        public override IObservable<StreamSocketConnection> ConnectionReceived => _connectionReceived;
 
         public StreamSocketConnectionListener(string port, IObjectSerializer serializer)
         {
@@ -25,7 +21,8 @@ namespace UwpNetworkingEssentials.StreamSockets
             _listener.ConnectionReceived += OnConnectionReceived;
         }
 
-        private async void OnConnectionReceived(StreamSocketListener sender, StreamSocketListenerConnectionReceivedEventArgs args)
+        private async void OnConnectionReceived(StreamSocketListener sender,
+            StreamSocketListenerConnectionReceivedEventArgs args)
         {
             try
             {
@@ -39,16 +36,15 @@ namespace UwpNetworkingEssentials.StreamSockets
             }
         }
 
-        public override async Task StartAsync()
+        protected override async Task StartCoreAsync()
         {
             await _listener.BindServiceNameAsync(Port);
         }
 
-        public override Task DisposeAsync()
+        protected override Task DisposeCoreAsync()
         {
             _listener.ConnectionReceived -= OnConnectionReceived;
             _listener.Dispose();
-            _connectionReceived.OnCompleted();
             return Task.CompletedTask;
         }
     }

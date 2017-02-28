@@ -2,7 +2,8 @@
 {
     public class StreamSocketDisconnectEventArgs : DisconnectEventArgsBase<StreamSocketConnection>
     {
-        public StreamSocketDisconnectEventArgs(StreamSocketConnection connection, ConnectionCloseReason reason) : base(connection, reason)
+        public StreamSocketDisconnectEventArgs(StreamSocketConnection connection, DisconnectReason reason)
+            : base(connection, reason)
         {
         }
     }

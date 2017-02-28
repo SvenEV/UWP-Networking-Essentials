@@ -3,7 +3,7 @@
   <metadata>
     <id>UwpNetworkingEssentials</id>
     <title>UWP Networking Essentials</title>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <authors>Sven Erik Vinkemeier</authors>
     <owners>Sven Erik Vinkemeier</owners>
     <licenseUrl>https://raw.githubusercontent.com/SvenEV/UWP-Networking-Essentials/master/LICENSE</licenseUrl>
@@ -17,6 +17,7 @@
       <group targetFramework="uap10.0">
         <dependency id="Microsoft.CSharp" version="4.0.1" />
         <dependency id="Newtonsoft.Json" version="9.0.1" />
+        <dependency id="Nito.AsyncEx" version="4.0.1" />
         <dependency id="Rx-Core" version="2.2.5" />
         <dependency id="Rx-Linq" version="2.2.5" />
         <dependency id="System.Collections" version="4.0.11" />
