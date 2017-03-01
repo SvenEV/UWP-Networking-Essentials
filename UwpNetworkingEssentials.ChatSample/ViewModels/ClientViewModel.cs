@@ -1,13 +1,10 @@
 ﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Threading;
-using System;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading.Tasks;
-using UwpNetworkingEssentials.AppServices;
-using UwpNetworkingEssentials.Bluetooth;
+using UwpNetworkingEssentials.Channels.AppServices;
+using UwpNetworkingEssentials.Channels.StreamSockets;
 using UwpNetworkingEssentials.Rpc;
-using UwpNetworkingEssentials.StreamSockets;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 

@@ -2,10 +2,10 @@
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading.Tasks;
-using UwpNetworkingEssentials.AppServices;
-using UwpNetworkingEssentials.MultiChannel;
+using UwpNetworkingEssentials.Channels.AppServices;
+using UwpNetworkingEssentials.Channels.MultiChannel;
+using UwpNetworkingEssentials.Channels.StreamSockets;
 using UwpNetworkingEssentials.Rpc;
-using UwpNetworkingEssentials.StreamSockets;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 

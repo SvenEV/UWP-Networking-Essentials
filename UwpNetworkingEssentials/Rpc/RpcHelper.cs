@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {

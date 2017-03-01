@@ -2,6 +2,7 @@
 using GalaSoft.MvvmLight.Threading;
 using System;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 using UwpNetworkingEssentials.Rpc;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
@@ -22,7 +23,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
                 Messages.Add($"Connected to {connection.Id}"));
         }
 
-        public async void OnDisconnected(RpcConnection connection, IDisconnectEventArgs args)
+        public async void OnDisconnected(RpcConnection connection, DisconnectEventArgs args)
         {
             await DispatcherHelper.RunAsync(async () =>
             {

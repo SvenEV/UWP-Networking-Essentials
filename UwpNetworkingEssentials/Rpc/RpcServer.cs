@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -55,11 +56,8 @@ namespace UwpNetworkingEssentials.Rpc
         /// </param>
         public RpcServer(IConnectionListener listener, object rpcTarget)
         {
-            if (listener == null)
-                throw new ArgumentNullException(nameof(listener));
-
+            _listener = listener ?? throw new ArgumentNullException(nameof(listener));
             _rpcTarget = rpcTarget;
-            _listener = listener;
             _connectionReceivedSubscription = _listener.ConnectionReceived.Subscribe(OnConnectionReceived);
             Connections = _connections.ToDictionaryAccessor(info => info.Connection);
         }
@@ -111,7 +109,7 @@ namespace UwpNetworkingEssentials.Rpc
             }
         }
         
-        private async void OnClientDisconnected(RpcConnection connection, IDisconnectEventArgs args)
+        private async void OnClientDisconnected(RpcConnection connection, DisconnectEventArgs args)
         {
             await _sema.WaitAsync();
 

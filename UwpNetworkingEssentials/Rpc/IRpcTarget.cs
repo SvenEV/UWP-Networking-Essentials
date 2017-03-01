@@ -1,4 +1,5 @@
-﻿using Windows.Networking.Sockets;
+﻿using UwpNetworkingEssentials.Channels;
+using Windows.Networking.Sockets;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -33,6 +34,6 @@ namespace UwpNetworkingEssentials.Rpc
         /// </summary>
         /// <param name="connection">The connection that has been closed</param>
         /// <param name="args">Provides further information about the disconnect</param>
-        void OnDisconnected(RpcConnection connection, IDisconnectEventArgs args);
+        void OnDisconnected(RpcConnection connection, DisconnectEventArgs args);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Threading;
 using System;
+using UwpNetworkingEssentials.Channels;
 using UwpNetworkingEssentials.Rpc;
-using UwpNetworkingEssentials.StreamSockets;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
@@ -27,11 +27,11 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             });
         }
 
-        public async void OnDisconnected(RpcConnection connection, IDisconnectEventArgs args)
+        public async void OnDisconnected(RpcConnection connection, DisconnectEventArgs args)
         {
             await DispatcherHelper.RunAsync(() =>
             {
-                Messages.Add($"Client disconnected: {args.Connection.Id} (Reason: {((StreamSocketDisconnectEventArgs)args).Reason})");
+                Messages.Add($"Client disconnected: {args.Connection.Id} (Reason: {args.Reason})");
                 RaisePropertyChanged(nameof(ClientCount));
             });
         }

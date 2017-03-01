@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using UwpNetworkingEssentials.AppServices;
+using UwpNetworkingEssentials.Channels.AppServices;
 using UwpNetworkingEssentials.Rpc;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;

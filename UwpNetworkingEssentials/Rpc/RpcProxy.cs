@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Dynamic;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -28,7 +29,13 @@ namespace UwpNetworkingEssentials.Rpc
         {
             var response = await _connection.SendMessageAsync(call);
 
-            if (response.Message is RpcReturn returnMessage)
+            if (response.Status != RequestStatus.Success)
+            {
+                throw new InvalidOperationException(
+                    $"The remote procedure call to '{call.MethodName}' failed ({response.Status})");
+            }
+
+            if (response.Response is RpcReturn returnMessage)
             {
                 if (!returnMessage.IsSuccessful)
                 {

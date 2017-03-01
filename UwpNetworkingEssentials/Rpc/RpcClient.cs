@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -41,7 +42,7 @@ namespace UwpNetworkingEssentials.Rpc
             (rpcTarget as IRpcTarget)?.OnConnected(_connection);
         }
         
-        private void OnDisconnected(IDisconnectEventArgs args)
+        private void OnDisconnected(DisconnectEventArgs args)
         {
             (_rpcTarget as IRpcTarget)?.OnDisconnected(_connection, args);
         }

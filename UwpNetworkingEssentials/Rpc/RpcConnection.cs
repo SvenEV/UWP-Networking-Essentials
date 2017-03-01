@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {
@@ -15,10 +16,7 @@ namespace UwpNetworkingEssentials.Rpc
 
         internal RpcConnection(IConnection connection)
         {
-            if (connection == null)
-                throw new ArgumentNullException(nameof(connection));
-
-            UnderlyingConnection = connection;
+            UnderlyingConnection = connection ?? throw new ArgumentNullException(nameof(connection));
             _proxy = new RpcProxy(connection);
         }
 
