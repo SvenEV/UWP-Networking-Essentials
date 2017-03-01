@@ -3,20 +3,26 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels.AppServices;
+using UwpNetworkingEssentials.Channels.DebugChannel;
 using UwpNetworkingEssentials.Channels.StreamSockets;
 using UwpNetworkingEssentials.Rpc;
+using Windows.ApplicationModel.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ClientViewModel : ViewModelBase, IRpcTarget
+    public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget
     {
         private readonly Frame _frame = Window.Current.Content as Frame;
 
         public RpcClient Client { get; private set; }
 
         public ObservableCollection<string> Messages { get; } = new ObservableCollection<string>();
+
+        public ClientViewModel(CoreApplicationView view) : base(view)
+        {
+        }
 
         public async Task ConnectViaStreamSocketsAsync(string port, string serverIp)
         {
@@ -46,6 +52,20 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             catch
             {
                 Messages.Add($"Failed to connect to app service in package {packageFamilyName}");
+            }
+        }
+
+        public void ConnectViaDebugChannel(DebugConnectionListener target)
+        {
+            try
+            {
+                var result = DebugConnection.Connect(target);
+                Client = new RpcClient(result, this);
+                RaisePropertyChanged(nameof(Client));
+            }
+            catch
+            {
+                Messages.Add($"Failed to connect to debug channel");
             }
         }
 

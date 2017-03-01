@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.Threading;
 using System;
 using System.Linq;
 using Windows.ApplicationModel;
+using Windows.ApplicationModel.Core;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -29,26 +30,25 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
         public MainViewModel()
         {
             _frame = Window.Current.Content as Frame;
-            DispatcherHelper.Initialize();
             LocalIp = GetLocalIp();
         }
 
         public void StartServer()
         {
-            var vm = new ServerViewModel();
+            var vm = new ServerViewModel(CoreApplication.MainView);
             _frame.Navigate(typeof(ServerPage), vm);
         }
 
         public async void ConnectClientViaStreamSockets()
         {
-            var vm = new ClientViewModel();
+            var vm = new ClientViewModel(CoreApplication.MainView);
             _frame.Navigate(typeof(ClientPage), vm);
             await vm.ConnectViaStreamSocketsAsync(Port, ServerIp);
         }
 
         public async void ConnectClientViaAppServices()
         {
-            var vm = new ClientViewModel();
+            var vm = new ClientViewModel(CoreApplication.MainView);
             _frame.Navigate(typeof(ClientPage), vm);
             await vm.ConnectViaAppServicesAsync(PackageFamilyName);
         }

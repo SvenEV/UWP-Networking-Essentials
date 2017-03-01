@@ -105,6 +105,7 @@
     <Compile Include="ServerPage.xaml.cs">
       <DependentUpon>ServerPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModels\ApplicationViewAwareViewModel.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
     <Compile Include="ViewModels\ClientViewModel.Rpc.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />

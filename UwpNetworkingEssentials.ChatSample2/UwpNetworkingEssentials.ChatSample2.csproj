@@ -109,6 +109,9 @@
       <Link>ServerPage.xaml.cs</Link>
       <DependentUpon>ServerPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="..\UwpNetworkingEssentials.ChatSample\ViewModels\ApplicationViewAwareViewModel.cs">
+      <Link>ViewModels\ApplicationViewAwareViewModel.cs</Link>
+    </Compile>
     <Compile Include="..\UwpNetworkingEssentials.ChatSample\ViewModels\ClientViewModel.cs">
       <Link>ViewModels\ClientViewModel.cs</Link>
     </Compile>

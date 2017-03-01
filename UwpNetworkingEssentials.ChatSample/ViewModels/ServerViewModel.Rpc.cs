@@ -6,13 +6,13 @@ using UwpNetworkingEssentials.Rpc;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ServerViewModel : ViewModelBase, IRpcTarget
+    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget
     {
         public async void BroadcastMessage(string message, [RpcCaller]RpcConnection caller)
         {
             // RPC method called by a client to broadcast a message
             // to all other connected clients
-            await DispatcherHelper.RunAsync(() =>
+            await RunAsync(() =>
                 Messages.Add($"{caller.Id} said: " + message));
 
             Server.ClientsExcept(caller.Id).AddMessage(message);
@@ -20,7 +20,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public async void OnConnected(RpcConnection connection)
         {
-            await DispatcherHelper.RunAsync(() =>
+            await RunAsync(() =>
             {
                 Messages.Add($"Client connected: {connection.Id}");
                 RaisePropertyChanged(nameof(ClientCount));
@@ -29,7 +29,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public async void OnDisconnected(RpcConnection connection, DisconnectEventArgs args)
         {
-            await DispatcherHelper.RunAsync(() =>
+            await RunAsync(() =>
             {
                 Messages.Add($"Client disconnected: {args.Connection.Id} (Reason: {args.Reason})");
                 RaisePropertyChanged(nameof(ClientCount));
@@ -38,7 +38,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public async void OnConnectionAttemptFailed(RpcConnectionAttemptFailedException exception)
         {
-            await DispatcherHelper.RunAsync(() =>
+            await RunAsync(() =>
             {
                 Messages.Add($"Client tried to connect but failed: {exception.RemoteHostName}:{exception.RemotePort}");
             });

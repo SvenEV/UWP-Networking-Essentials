@@ -1,17 +1,22 @@
-﻿using GalaSoft.MvvmLight;
+﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels.AppServices;
+using UwpNetworkingEssentials.Channels.DebugChannel;
 using UwpNetworkingEssentials.Channels.MultiChannel;
 using UwpNetworkingEssentials.Channels.StreamSockets;
 using UwpNetworkingEssentials.Rpc;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ServerViewModel : ViewModelBase, IRpcTarget
+    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget
     {
         private readonly MultiChannelConnectionListener _multiChannelListener;
         private readonly Frame _frame = Window.Current.Content as Frame;
@@ -26,7 +31,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public ObservableCollection<string> Messages { get; } = new ObservableCollection<string>();
 
-        public ServerViewModel()
+        public ServerViewModel(CoreApplicationView view) : base(view)
         {
             _serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
 
@@ -45,10 +50,11 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
                 var listener = new StreamSocketConnectionListener(Port, _serializer);
                 await listener.StartAsync();
                 _multiChannelListener.Listeners.Add(listener);
+                Messages.Add("Started StreamSocketConnectionListener");
             }
             catch
             {
-                Messages.Add($"Failed to start all connection listeners");
+                Messages.Add($"Failed to start {nameof(StreamSocketConnectionListener)}");
             }
         }
 
@@ -58,6 +64,44 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             await listener.StartAsync();
             _multiChannelListener.Listeners.Add(listener);
             App.TheASConnectionListener = listener;
+            Messages.Add("Started ASConnectionListener");
+        }
+
+        public async void StartDebugConnectionListener()
+        {
+            var listener = new DebugConnectionListener();
+            await listener.StartAsync();
+            _multiChannelListener.Listeners.Add(listener);
+            Messages.Add("Started DebugConnectionListener");
+        }
+
+        public async void ConnectDebugClient()
+        {
+            var debugListener = _multiChannelListener.Listeners
+                .OfType<DebugConnectionListener>()
+                .FirstOrDefault();
+
+            if (debugListener != null)
+            {
+                var view = CoreApplication.CreateNewView();
+                var viewId = 0;
+
+                await view.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    var frame = new Frame();
+                    Window.Current.Content = frame;
+
+                    var vm = new ClientViewModel(view);
+                    vm.ConnectViaDebugChannel(debugListener);
+
+                    frame.Navigate(typeof(ClientPage), vm);
+
+                    Window.Current.Activate();
+                    viewId = ApplicationView.GetForCurrentView().Id;
+                });
+
+                var viewShown = await ApplicationViewSwitcher.TryShowAsStandaloneAsync(viewId);
+            }
         }
 
         public async void SendMessage(string message)
@@ -73,7 +117,8 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             await Server.DisposeAsync();
             Messages.Add("Server closed");
             await Task.Delay(2000);
-            _frame.GoBack();
+            if (_frame.CanGoBack)
+                _frame.GoBack();
         }
     }
 }

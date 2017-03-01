@@ -50,6 +50,12 @@
             <!-- Connection Listeners -->
             <PivotItem Header="Listeners">
                 <StackPanel>
+                    <TextBlock Text="Debug Channel" FontWeight="Bold"/>
+                    <Button Content="Start DebugConnectionListener"
+                            Click="{x:Bind ViewModel.StartDebugConnectionListener}"/>
+                    <Button Content="Connect an in-process debug-client"
+                            Click="{x:Bind ViewModel.ConnectDebugClient}"/>
+
                     <TextBlock Text="Stream Sockets" FontWeight="Bold"/>
                     <TextBox Text="{x:Bind ViewModel.Port, Mode=TwoWay}"/>
                     <Button Content="Start StreamSocketsConnectionListener"

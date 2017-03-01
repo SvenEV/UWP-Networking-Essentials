@@ -124,7 +124,9 @@
     <Compile Include="Channels\Bluetooth\BluetoothConnectionListener.cs" />
     <Compile Include="Channels\ConnectionListenerStatus.cs" />
     <Compile Include="Channels\ConnectionStatus.cs" />
-    <Compile Include="Channels\Debug\DebugConnectionListener.cs" />
+    <Compile Include="Channels\DebugChannel\DebugConnection.cs" />
+    <Compile Include="Channels\DebugChannel\DebugConnectionListener.cs" />
+    <Compile Include="Channels\DebugChannel\DebugRequest.cs" />
     <Compile Include="Channels\RequestResult.cs" />
     <Compile Include="Channels\RequestStatus.cs" />
     <Compile Include="Channels\RespondResult.cs" />
