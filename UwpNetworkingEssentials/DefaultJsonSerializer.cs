@@ -13,25 +13,19 @@ namespace UwpNetworkingEssentials
     {
         private static readonly JsonSerializerSettings _defaultJsonSettings = new JsonSerializerSettings();
 
-        private readonly Assembly _assembly;
         private readonly Dictionary<string, Type> _types;
         private readonly JsonSerializerSettings _jsonSettings;
 
         /// <summary>
         /// Initializes a new default serializer.
         /// </summary>
-        /// <param name="assembly">The assembly that is used for type lookup and instantiation</param>
+        /// <param name="assemblies">The assemblies that are used for type lookup and instantiation</param>
         /// <param name="jsonSettings">JSON serializer settings that are considered during object serialization</param>
-        public DefaultJsonSerializer(Assembly assembly, JsonSerializerSettings jsonSettings)
+        public DefaultJsonSerializer(IEnumerable<Assembly> assemblies, JsonSerializerSettings jsonSettings)
         {
-            _assembly = assembly;
             _jsonSettings = jsonSettings ?? _defaultJsonSettings;
-            _types = new[]
-                {
-                    _assembly,
-                    GetType().GetTypeInfo().Assembly,
-                    typeof(int).GetTypeInfo().Assembly
-                }
+            _types = assemblies
+                .Concat(new[] { GetType().GetTypeInfo().Assembly, typeof(int).GetTypeInfo().Assembly })
                 .Distinct()
                 .SelectMany(asm => asm.GetTypes())
                 .ToDictionary(t => t.FullName);
@@ -40,8 +34,16 @@ namespace UwpNetworkingEssentials
         /// <summary>
         /// Initializes a new default serializer with default JSON serialization settings.
         /// </summary>
-        /// <param name="assembly">The assembly that is used for type lookup and instantiation</param>
-        public DefaultJsonSerializer(Assembly assembly) : this(assembly, _defaultJsonSettings)
+        /// <param name="assemblies">The assemblies that are used for type lookup and instantiation</param>
+        public DefaultJsonSerializer(IEnumerable<Assembly> assemblies) : this(assemblies, _defaultJsonSettings)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new default serializer with default JSON serialization settings.
+        /// </summary>
+        /// <param name="assemblies">The assemblies that are used for type lookup and instantiation</param>
+        public DefaultJsonSerializer(params Assembly[] assemblies) : this(assemblies, _defaultJsonSettings)
         {
         }
 
