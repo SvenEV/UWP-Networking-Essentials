@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Reflection;
 using UwpNetworkingEssentials.Channels.AppServices;
-using UwpNetworkingEssentials.Rpc;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -16,10 +14,6 @@ namespace UwpNetworkingEssentials.ChatSample
         public App()
         {
             InitializeComponent();
-
-            TheASConnectionListener = new ASConnectionListener(
-                new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly));
-            TheASConnectionListener.StartAsync();
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)

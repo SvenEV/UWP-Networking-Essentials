@@ -54,7 +54,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 
         public async void StartASConnectionListener()
         {
-            var listener = new ASConnectionListener(_serializer);
+            var listener = new ASConnectionListener("Chat", _serializer);
             await listener.StartAsync();
             _multiChannelListener.Listeners.Add(listener);
             App.TheASConnectionListener = listener;

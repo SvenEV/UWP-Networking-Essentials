@@ -9,8 +9,15 @@ namespace UwpNetworkingEssentials.Channels.AppServices
     {
         private readonly IObjectSerializer _serializer;
 
-        public ASConnectionListener(IObjectSerializer serializer)
+        /// <summary>
+        /// The name of the app service this listener is responsible for.
+        /// Incoming connections are only accepted if they match this service name.
+        /// </summary>
+        public string ServiceName { get; }
+
+        public ASConnectionListener(string serviceName, IObjectSerializer serializer)
         {
+            ServiceName = serviceName;
             _serializer = serializer;
         }
 
@@ -40,9 +47,15 @@ namespace UwpNetworkingEssentials.Channels.AppServices
 
                 if (taskInstance.TriggerDetails is AppServiceTriggerDetails e)
                 {
-                    var deferral = taskInstance.GetDeferral();
+                    if (e.Name != ServiceName)
+                    {
+                        // the other endpoint tries to connect to a different app service within this app
+                        return false;
+                    }
 
+                    var deferral = taskInstance.GetDeferral();
                     var connection = await ASConnection.AcceptConnectionAsync(e, deferral, _serializer);
+
                     if (connection != null)
                         _connectionReceived.OnNext(connection);
 
