@@ -74,13 +74,7 @@ namespace UwpNetworkingEssentials.Rpc
                         $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
                 }
 
-                if (formalParam.CustomAttributes.Any(a => a.AttributeType == typeof(RpcCallerAttribute)) &&
-                    formalParam.ParameterType.IsAssignableFrom(typeof(RpcConnection)))
-                {
-                    // Insert RpcProxy into [RpcCaller]-annotated parameter
-                    actualParams[i] = connection;
-                }
-                else if (actualParam == Type.Missing && !formalParam.IsOptional)
+                if (actualParam == Type.Missing && !formalParam.IsOptional)
                 {
                     return RpcReturn.Faulted("Parameter mismatch: Not enough parameters specified " +
                         $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
@@ -90,6 +84,7 @@ namespace UwpNetworkingEssentials.Rpc
             // Invoke method
             try
             {
+                RpcCallContext.Register(call, connection);
                 var returnValue = method.Invoke(rpcTarget, actualParams.ToArray());
 
                 if (returnValue is Task)

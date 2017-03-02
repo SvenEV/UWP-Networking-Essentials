@@ -151,7 +151,7 @@
     <Compile Include="Rpc\IRpcServer.cs" />
     <Compile Include="Rpc\IRpcTarget.cs" />
     <Compile Include="Rpc\RpcCall.cs" />
-    <Compile Include="Rpc\RpcCallerAttribute.cs" />
+    <Compile Include="Rpc\RpcCallContext.cs" />
     <Compile Include="Rpc\RpcClient.cs" />
     <Compile Include="Rpc\RpcConnection.cs" />
     <Compile Include="Rpc\RpcConnectionAttemptFailedException.cs" />

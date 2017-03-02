@@ -8,8 +8,10 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
     public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget
     {
-        public async void BroadcastMessage(string message, [RpcCaller]RpcConnection caller)
+        public async void BroadcastMessage(string message)
         {
+            var caller = RpcCallContext.Current.Connection;
+
             // RPC method called by a client to broadcast a message
             // to all other connected clients
             await RunAsync(() =>

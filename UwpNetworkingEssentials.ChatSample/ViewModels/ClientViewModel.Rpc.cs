@@ -1,7 +1,4 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Threading;
-using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels;
 using UwpNetworkingEssentials.Rpc;
 
@@ -9,8 +6,10 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
     public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget
     {
-        public async void AddMessage(string message, [RpcCaller]RpcConnection caller)
+        public async void AddMessage(string message)
         {
+            var caller = RpcCallContext.Current.Connection;
+
             // RPC method called by the server to add a message that has been
             // sent by the server or another client to the message list
             await RunAsync(() =>
