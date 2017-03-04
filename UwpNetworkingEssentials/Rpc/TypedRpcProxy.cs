@@ -9,7 +9,7 @@ namespace UwpNetworkingEssentials.Rpc
 {
     public class TypedRpcProxy : DispatchProxy
     {
-        private IReadOnlyList<IConnection> _connections;
+        private IReadOnlyList<IConnection> _connections = null;
 
         public static T Create<T>(IConnection connection)
         {
