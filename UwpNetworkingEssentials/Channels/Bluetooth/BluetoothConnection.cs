@@ -46,9 +46,8 @@ namespace UwpNetworkingEssentials.Channels.Bluetooth
                 }
 
                 var attributes = await deviceService.GetSdpRawAttributesAsync();
-                IBuffer serviceNameAttributeBuffer;
 
-                if (!attributes.TryGetValue(SdpServiceNameAttributeId, out serviceNameAttributeBuffer))
+                if (!attributes.TryGetValue(SdpServiceNameAttributeId, out var serviceNameAttributeBuffer))
                 {
                     // The service is not advertising the Service Name attribute (attribute id = 0x100).
                     // Please verify that you are running a BluetoothConnectionListener.
@@ -75,8 +74,9 @@ namespace UwpNetworkingEssentials.Channels.Bluetooth
                     var socket = new StreamSocket();
                     await socket.ConnectAsync(deviceService.ConnectionHostName, deviceService.ConnectionServiceName);
 
-                    var connection = await StreamSocketConnection.ConnectAsync(socket, serializer);
-                    return connection;
+                    return await StreamSocketConnection
+                        .ConnectAsync(socket, serializer)
+                        .ContinueOnOtherContext();
                 }
 
             }

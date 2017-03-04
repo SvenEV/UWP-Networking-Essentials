@@ -77,11 +77,11 @@ namespace UwpNetworkingEssentials.Channels
 
         public async Task CloseAsync()
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status == ConnectionStatus.Connected)
                 {
-                    await CloseCoreAsync();
+                    await CloseCoreAsync().ContinueOnOtherContext();
                     _status = ConnectionStatus.Disconnected;
                     Dispose();
                 }
@@ -95,14 +95,14 @@ namespace UwpNetworkingEssentials.Channels
 
         public async Task<RequestResult> SendMessageAsync(object message, RequestOptions options)
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status == ConnectionStatus.Disposed) // state 'Disconnected' cannot occur here
                     return new RequestResult(null, RequestStatus.Disconnected);
 
                 try
                 {
-                    return await SendMessageCoreAsync(message, options);
+                    return await SendMessageCoreAsync(message, options).ContinueOnOtherContext();
                 }
                 catch (Exception e)
                 {
@@ -114,7 +114,7 @@ namespace UwpNetworkingEssentials.Channels
 
         protected async Task DisposeAsync()
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
                 Dispose();
         }
 

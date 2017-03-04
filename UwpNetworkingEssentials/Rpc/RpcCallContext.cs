@@ -27,7 +27,7 @@ namespace UwpNetworkingEssentials.Rpc
             return context != null;
         }
 
-        internal static RpcCallContext Register(RpcCall call, RpcConnection connection)
+        internal static RpcCallContext Register(RpcCall call, RpcConnectionBase connection)
         {
             var context = new RpcCallContext(call, connection);
             _context.Value = context;
@@ -38,15 +38,15 @@ namespace UwpNetworkingEssentials.Rpc
         // instance members
 
         private readonly RpcCall _call;
-        private readonly RpcConnection _connection;
+        private readonly RpcConnectionBase _connection;
 
         public string MethodName => _call.MethodName;
 
-        public IReadOnlyList<object> Arguments => _call.Parameters;
+        public IReadOnlyList<object> Arguments => _call.Arguments;
 
-        public RpcConnection Connection => _connection;
+        public RpcConnectionBase Connection => _connection;
 
-        private RpcCallContext(RpcCall call, RpcConnection connection)
+        private RpcCallContext(RpcCall call, RpcConnectionBase connection)
         {
             _call = call;
             _connection = connection;

@@ -1,14 +1,12 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Threading;
-using System;
+﻿using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels;
 using UwpNetworkingEssentials.Rpc;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget
+    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget, IServerInterface
     {
-        public async void BroadcastMessage(string message)
+        public async Task BroadcastMessageAsync(string message)
         {
             var caller = RpcCallContext.Current.Connection;
 
@@ -20,7 +18,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             Server.ClientsExcept(caller.Id).AddMessage(message);
         }
 
-        public async void OnConnected(RpcConnection connection)
+        public async void OnConnected(RpcConnectionBase connection)
         {
             await RunAsync(() =>
             {
@@ -29,7 +27,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             });
         }
 
-        public async void OnDisconnected(RpcConnection connection, DisconnectEventArgs args)
+        public async void OnDisconnected(RpcConnectionBase connection, DisconnectEventArgs args)
         {
             await RunAsync(() =>
             {

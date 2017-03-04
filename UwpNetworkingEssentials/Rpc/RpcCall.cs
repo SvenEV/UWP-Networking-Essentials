@@ -12,19 +12,19 @@ namespace UwpNetworkingEssentials.Rpc
         public string MethodName { get; set; }
 
         [JsonProperty(ItemTypeNameHandling = TypeNameHandling.All)]
-        public object[] Parameters { get; set; }
+        public object[] Arguments { get; set; }
 
         public RpcCall()
         {
         }
 
-        public RpcCall(string methodName, object[] parameters)
+        public RpcCall(string methodName, object[] arguments)
         {
             MethodName = methodName;
-            Parameters = parameters;
+            Arguments = arguments;
         }
 
         public override string ToString()
-            => $"{MethodName}({string.Join(", ", Parameters.Select(p => p == null ? "null" : p.GetType().Name))})";
+            => $"{MethodName}({string.Join(", ", Arguments.Select(p => p == null ? "null" : p.GetType().Name))})";
     }
 }

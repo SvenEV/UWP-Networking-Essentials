@@ -2,6 +2,7 @@
 
 namespace UwpNetworkingEssentials.Rpc
 {
+    // TODO: Rework
     public class RpcConnectionAttemptFailedException : Exception
     {
         public string RemoteHostName { get; }

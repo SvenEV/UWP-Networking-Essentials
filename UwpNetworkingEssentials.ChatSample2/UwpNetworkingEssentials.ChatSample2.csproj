@@ -118,6 +118,9 @@
     <Compile Include="..\UwpNetworkingEssentials.ChatSample\ViewModels\ClientViewModel.Rpc.cs">
       <Link>ViewModels\ClientViewModel.Rpc.cs</Link>
     </Compile>
+    <Compile Include="..\UwpNetworkingEssentials.ChatSample\ViewModels\IServerInterface.cs">
+      <Link>ViewModels\IServerInterface.cs</Link>
+    </Compile>
     <Compile Include="..\UwpNetworkingEssentials.ChatSample\ViewModels\MainViewModel.cs">
       <Link>ViewModels\MainViewModel.cs</Link>
     </Compile>

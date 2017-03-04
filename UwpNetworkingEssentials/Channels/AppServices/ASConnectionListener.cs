@@ -37,7 +37,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
         /// </returns>
         public async Task<bool> HandleBackgroundActivationAsync(IBackgroundTaskInstance taskInstance)
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status == ConnectionListenerStatus.Disposed)
                     throw new ObjectDisposedException(GetType().FullName);
@@ -54,7 +54,10 @@ namespace UwpNetworkingEssentials.Channels.AppServices
                     }
 
                     var deferral = taskInstance.GetDeferral();
-                    var connection = await ASConnection.AcceptConnectionAsync(e, deferral, _serializer);
+
+                    var connection = await ASConnection
+                        .AcceptConnectionAsync(e, deferral, _serializer)
+                        .ContinueOnOtherContext();
 
                     if (connection != null)
                         _connectionReceived.OnNext(connection);

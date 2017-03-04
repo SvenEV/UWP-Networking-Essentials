@@ -55,11 +55,11 @@ namespace UwpNetworkingEssentials.Channels
 
         public async Task DisposeAsync()
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status != ConnectionListenerStatus.Disposed)
                 {
-                    await DisposeCoreAsync();
+                    await DisposeCoreAsync().ContinueOnOtherContext();
                     _connectionReceived.OnCompleted();
                     _status = ConnectionListenerStatus.Disposed;
                 }
@@ -68,14 +68,14 @@ namespace UwpNetworkingEssentials.Channels
 
         public async Task StartAsync()
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status == ConnectionListenerStatus.Disposed)
                     throw new ObjectDisposedException(GetType().FullName);
 
                 if (_status == ConnectionListenerStatus.Inactive)
                 {
-                    await StartCoreAsync();
+                    await StartCoreAsync().ContinueOnOtherContext();
                     _status = ConnectionListenerStatus.Active;
                 }
             }

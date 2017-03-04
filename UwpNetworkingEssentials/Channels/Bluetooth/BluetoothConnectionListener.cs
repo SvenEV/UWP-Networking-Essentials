@@ -73,7 +73,10 @@ namespace UwpNetworkingEssentials.Channels.Bluetooth
         {
             try
             {
-                var connection = await StreamSocketConnection.AcceptConnectionAsync(args.Socket, _serializer);
+                var connection = await StreamSocketConnection
+                    .AcceptConnectionAsync(args.Socket, _serializer)
+                    .ContinueOnOtherContext();
+
                 _connectionReceived.OnNext(connection);
             }
             catch

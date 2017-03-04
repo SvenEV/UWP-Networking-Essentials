@@ -1,5 +1,4 @@
-﻿using GalaSoft.MvvmLight;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels.AppServices;
@@ -12,11 +11,11 @@ using Windows.UI.Xaml.Controls;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget
+    public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget, IClientInterface
     {
         private readonly Frame _frame = Window.Current.Content as Frame;
 
-        public RpcClient Client { get; private set; }
+        public RpcConnection<IServerInterface> Client { get; private set; }
 
         public ObservableCollection<string> Messages { get; } = new ObservableCollection<string>();
 
@@ -31,7 +30,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
                 var serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
                 var connection = await StreamSocketConnection.ConnectAsync(serverIp, port, serializer);
                 //var connection = await BluetoothConnection.ConnectAsync(MainViewModel.CustomBluetoothServiceId, serializer);
-                Client = new RpcClient(connection, this);
+                Client = new RpcConnection<IServerInterface>(connection, this);
                 RaisePropertyChanged(nameof(Client));
             }
             catch
@@ -46,7 +45,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             {
                 var serializer = new DefaultJsonSerializer(GetType().GetTypeInfo().Assembly);
                 var result = await ASConnection.ConnectLocallyAsync("Chat", packageFamilyName, serializer);
-                Client = new RpcClient(result.Connection, this);
+                Client = new RpcConnection<IServerInterface>(result.Connection, this);
                 RaisePropertyChanged(nameof(Client));
             }
             catch
@@ -60,7 +59,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             try
             {
                 var result = DebugConnection.Connect(target);
-                Client = new RpcClient(result, this);
+                Client = new RpcConnection<IServerInterface>(result, this);
                 RaisePropertyChanged(nameof(Client));
             }
             catch
@@ -76,7 +75,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             Messages.Add("I say: " + message);
             try
             {
-                await Client.Server.BroadcastMessage(message);
+                await Client.Proxy.BroadcastMessageAsync(message);
             }
             catch
             {

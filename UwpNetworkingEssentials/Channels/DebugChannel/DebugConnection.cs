@@ -25,7 +25,7 @@ namespace UwpNetworkingEssentials.Channels.DebugChannel
         protected override async Task CloseCoreAsync()
         {
             _disconnectReason = DisconnectReason.LocalPeerDisconnected;
-            await OppositeConnection.NotifyRemoteEndpointClosed();
+            await OppositeConnection.NotifyRemoteEndpointClosedAsync().ContinueOnOtherContext();
         }
 
         protected override async Task<RequestResult> SendMessageCoreAsync(object message, RequestOptions options)
@@ -38,7 +38,8 @@ namespace UwpNetworkingEssentials.Channels.DebugChannel
                 {
                     return await OppositeConnection
                         .HandleIncomingRequestAsync(request)
-                        .TimeoutAfter(options.ResponseTimeout);
+                        .TimeoutAfter(options.ResponseTimeout)
+                        .ContinueOnOtherContext();
                 }
                 catch (TimeoutException)
                 {
@@ -55,14 +56,14 @@ namespace UwpNetworkingEssentials.Channels.DebugChannel
         private async Task<RequestResult> HandleIncomingRequestAsync(DebugRequest request)
         {
             _requestReceived.OnNext(request);
-            await request.WaitForDeferralsAsync();
+            await request.WaitForDeferralsAsync().ContinueOnOtherContext();
             return request.Response;
         }
 
-        private async Task NotifyRemoteEndpointClosed()
+        private async Task NotifyRemoteEndpointClosedAsync()
         {
             _disconnectReason = DisconnectReason.RemotePeerDisconnected;
-            await DisposeAsync();
+            await DisposeAsync().ContinueOnOtherContext();
         }
 
         protected override void DisposeCore()

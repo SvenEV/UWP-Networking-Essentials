@@ -4,7 +4,7 @@ using UwpNetworkingEssentials.Rpc;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget
+    public partial class ClientViewModel : ApplicationViewAwareViewModel, IRpcTarget, IClientInterface
     {
         public async void AddMessage(string message)
         {
@@ -16,13 +16,13 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
                 Messages.Add($"{caller.Id} said: " + message));
         }
 
-        public async void OnConnected(RpcConnection connection)
+        public async void OnConnected(RpcConnectionBase connection)
         {
             await RunAsync(() =>
                 Messages.Add($"Connected to {connection.Id}"));
         }
 
-        public async void OnDisconnected(RpcConnection connection, DisconnectEventArgs args)
+        public async void OnDisconnected(RpcConnectionBase connection, DisconnectEventArgs args)
         {
             await RunAsync(async () =>
             {

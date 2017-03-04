@@ -26,7 +26,10 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
         {
             try
             {
-                var connection = await StreamSocketConnection.AcceptConnectionAsync(args.Socket, _serializer);
+                var connection = await StreamSocketConnection
+                    .AcceptConnectionAsync(args.Socket, _serializer)
+                    .ContinueOnOtherContext();
+
                 if (connection != null)
                     _connectionReceived.OnNext(connection);
             }

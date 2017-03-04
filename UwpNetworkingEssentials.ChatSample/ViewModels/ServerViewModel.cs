@@ -16,14 +16,14 @@ using Windows.UI.Xaml.Controls;
 
 namespace UwpNetworkingEssentials.ChatSample.ViewModels
 {
-    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget
+    public partial class ServerViewModel : ApplicationViewAwareViewModel, IRpcTarget, IServerInterface
     {
         private readonly MultiChannelConnectionListener _multiChannelListener;
         private readonly Frame _frame = Window.Current.Content as Frame;
         private readonly IObjectSerializer _serializer;
         private string _port = "1234";
 
-        public RpcServer Server { get; private set; }
+        public RpcServer<IClientInterface> Server { get; private set; }
 
         public string Port { get => _port; set => Set(ref _port, value); }
 
@@ -38,7 +38,7 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             _multiChannelListener = new MultiChannelConnectionListener();
             _multiChannelListener.StartAsync().Wait();
 
-            Server = new RpcServer(_multiChannelListener, this);
+            Server = new RpcServer<IClientInterface>(_multiChannelListener, this);
             Messages.Add($"Server started");
             RaisePropertyChanged(nameof(Server));
         }
@@ -104,12 +104,12 @@ namespace UwpNetworkingEssentials.ChatSample.ViewModels
             }
         }
 
-        public async void SendMessage(string message)
+        public void SendMessage(string message)
         {
             // Add message to own message list and broadcast message
             // to all connected clients
             Messages.Add("I say: " + message);
-            await Server.AllClients.AddMessage(message);
+            Server.AllClients.AddMessage(message);
         }
 
         public async void CloseServer()

@@ -146,20 +146,19 @@
     <Compile Include="ObjectSerializerExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\DictionaryAccessor.cs" />
-    <Compile Include="Rpc\IRpcClient.cs" />
-    <Compile Include="Rpc\IRpcProxy.cs" />
     <Compile Include="Rpc\IRpcServer.cs" />
     <Compile Include="Rpc\IRpcTarget.cs" />
     <Compile Include="Rpc\RpcCall.cs" />
     <Compile Include="Rpc\RpcCallContext.cs" />
-    <Compile Include="Rpc\RpcClient.cs" />
-    <Compile Include="Rpc\RpcConnection.cs" />
+    <Compile Include="Rpc\RpcConnectionBase.cs" />
+    <Compile Include="Rpc\RpcConnection.Dynamic.cs" />
+    <Compile Include="Rpc\RpcConnection.Typed.cs" />
     <Compile Include="Rpc\RpcConnectionAttemptFailedException.cs" />
     <Compile Include="Rpc\RpcHelper.cs" />
     <Compile Include="Rpc\RpcMultiProxy.cs" />
     <Compile Include="Rpc\RpcProxy.cs" />
     <Compile Include="Rpc\RpcReturn.cs" />
-    <Compile Include="Rpc\RpcServer.cs" />
+    <Compile Include="Rpc\RpcServerBase.cs" />
     <Compile Include="Channels\StreamSockets\StreamSocketConnection.cs" />
     <Compile Include="Channels\StreamSockets\StreamSocketConnectionCloseMessage.cs" />
     <Compile Include="Channels\DisconnectReason.cs" />
@@ -168,9 +167,11 @@
     <Compile Include="Channels\ConnectionRequestMessage.cs" />
     <Compile Include="Channels\ConnectionResponseMessage.cs" />
     <Compile Include="Channels\StreamSockets\StreamSocketRequest.cs" />
+    <Compile Include="Rpc\RpcServer.Dynamic.cs" />
+    <Compile Include="Rpc\RpcServer.Typed.cs" />
+    <Compile Include="Rpc\TypedRpcProxy.cs" />
     <EmbeddedResource Include="Properties\UwpNetworkingEssentials.rd.xml" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

@@ -57,7 +57,7 @@ namespace UwpNetworkingEssentials.Channels
                 // use a deferral here for convenience - this way the API user only needs to acquire a deferral if the call
                 // to SendResponseAsync(...) is deferred beyond the RequestReceived event handler
                 using (var deferral = GetDeferral())
-                    return await SendResponseCoreAsync(message);
+                    return await SendResponseCoreAsync(message).ContinueOnOtherContext();
             }
             catch (Exception e)
             {

@@ -27,7 +27,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
         {
             try
             {
-                return await _connection.SendResponseAsync(RequestId, responseMessage);
+                return await _connection.SendResponseAsync(RequestId, responseMessage).ContinueOnOtherContext();
             }
             catch (Exception e)
             {

@@ -8,20 +8,58 @@ namespace UwpNetworkingEssentials.Rpc
 {
     internal static class RpcHelper
     {
-        public static async void HandleMethodCall(RpcConnection connection, IRequest rpcCallRequest, object rpcTarget)
+        /// <summary>
+        /// Sends an <see cref="RpcCall"/> and returns the result from the <see cref="RpcReturn"/> response.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="call"></param>
+        /// <returns></returns>
+        public static async Task<object> CallMethodAsync(IConnection connection, RpcCall call)
+        {
+            var response = await connection.SendMessageAsync(call).ContinueOnOtherContext();
+
+            if (response.Status != RequestStatus.Success)
+            {
+                throw new InvalidOperationException(
+                    $"The remote procedure call to '{call.MethodName}' failed ({response.Status})");
+            }
+
+            if (response.Response is RpcReturn returnMessage)
+            {
+                if (!returnMessage.IsSuccessful)
+                {
+                    throw new InvalidOperationException($"The remote procedure call to '{call.MethodName}' failed " +
+                        $"({returnMessage.Error ?? "no details"})");
+                }
+
+                return returnMessage.Value;
+            }
+
+            throw new InvalidOperationException(
+                $"The remote procedure call to '{call.MethodName}' failed (invalid response message)");
+        }
+
+        /// <summary>
+        /// Takes an <see cref="RpcCall"/> from a request, invokes the desired method, and responds to the request
+        /// with an <see cref="RpcReturn"/> containing the result of the method invocation.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <param name="rpcCallRequest"></param>
+        /// <param name="rpcTarget"></param>
+        public static async void HandleMethodCall(RpcConnectionBase connection, IRequest rpcCallRequest)
         {
             using (var deferral = rpcCallRequest.GetDeferral())
             {
                 try
                 {
-                    if (rpcTarget == null)
+                    if (connection.CallTarget == null)
                     {
                         await rpcCallRequest.SendResponseAsync(
                             RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
                     }
 
                     var call = (RpcCall)rpcCallRequest.Message;
-                    var result = await InvokeMethodAsync(rpcTarget, connection, call);
+                    var result = await InvokeMethodAsync(connection, call);
                     await rpcCallRequest.SendResponseAsync(result);
                 }
                 catch
@@ -31,7 +69,7 @@ namespace UwpNetworkingEssentials.Rpc
             }
         }
 
-        public static async Task<RpcReturn> InvokeMethodAsync(object rpcTarget, RpcConnection connection, RpcCall call)
+        public static async Task<RpcReturn> InvokeMethodAsync(RpcConnectionBase connection, RpcCall call)
         {
             // Current limitations
             // - no support for overloaded methods
@@ -39,7 +77,7 @@ namespace UwpNetworkingEssentials.Rpc
             if (string.IsNullOrEmpty(call.MethodName))
                 return RpcReturn.Faulted("No method name specified");
 
-            var method = rpcTarget.GetType().GetMethod(call.MethodName);
+            var method = connection.CallTarget.GetType().GetMethod(call.MethodName);
 
             if (method == null)
             {
@@ -49,9 +87,9 @@ namespace UwpNetworkingEssentials.Rpc
 
             // Parameter check
             var formalParams = method.GetParameters();
-            var actualParams = call.Parameters.ToList();
+            var actualParams = call.Arguments.ToList();
 
-            if (call.Parameters.Length > formalParams.Length)
+            if (call.Arguments.Length > formalParams.Length)
             {
                 return RpcReturn.Faulted("Parameter mismatch: Too many arguments specified " +
                     $"(attempted call: {call.ToString()}, local method: {method.ToDescriptionString()})");
@@ -85,7 +123,7 @@ namespace UwpNetworkingEssentials.Rpc
             try
             {
                 RpcCallContext.Register(call, connection);
-                var returnValue = method.Invoke(rpcTarget, actualParams.ToArray());
+                var returnValue = method.Invoke(connection.CallTarget, actualParams.ToArray());
 
                 if (returnValue is Task)
                 {

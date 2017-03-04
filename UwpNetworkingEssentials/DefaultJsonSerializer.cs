@@ -57,7 +57,7 @@ namespace UwpNetworkingEssentials
                 return null;
 
             var type = LookupType(message.TypeName);
-            var genericParams = message.GenericTypeParameters.Select(LookupType).ToArray();
+            var genericParams = message.GenericTypeArguments.Select(LookupType).ToArray();
             var finalType = genericParams.Length == 0 ? type : type.MakeGenericType(genericParams);
 
             return JsonConvert.DeserializeObject(message.Value, finalType, _jsonSettings);
@@ -73,7 +73,7 @@ namespace UwpNetworkingEssentials
         class JsonMessage
         {
             public string TypeName { get; set; }
-            public string[] GenericTypeParameters { get; set; }
+            public string[] GenericTypeArguments { get; set; }
             public string Value { get; set; }
 
             public bool IsEmpty => TypeName == null || Value == null;
@@ -94,13 +94,13 @@ namespace UwpNetworkingEssentials
                 if (type.IsConstructedGenericType)
                 {
                     TypeName = type.GetGenericTypeDefinition().FullName;
-                    GenericTypeParameters = o.GetType().GenericTypeArguments
+                    GenericTypeArguments = o.GetType().GenericTypeArguments
                         .Select(t => t.FullName).ToArray();
                 }
                 else
                 {
                     TypeName = type.FullName;
-                    GenericTypeParameters = Array.Empty<string>();
+                    GenericTypeArguments = Array.Empty<string>();
                 }
             }
         }

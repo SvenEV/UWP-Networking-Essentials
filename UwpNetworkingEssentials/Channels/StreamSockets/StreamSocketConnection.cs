@@ -45,13 +45,17 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
             using (var reader = new DataReader(socket.InputStream))
             using (var writer = new DataWriter(socket.OutputStream))
             {
-                var request = await serializer.DeserializeFromStreamAsync(reader, CancellationToken.None)
-                    as ConnectionRequestMessage;
+                var request = await serializer
+                    .DeserializeFromStreamAsync(reader, CancellationToken.None)
+                    .ContinueOnOtherContext() as ConnectionRequestMessage;
 
                 if (request == null)
                 {
                     // Wrong message received => reject connection
-                    await serializer.SerializeToStreamAsync(new ConnectionResponseMessage(null), writer);
+                    await serializer
+                        .SerializeToStreamAsync(new ConnectionResponseMessage(null), writer)
+                        .ContinueOnOtherContext();
+
                     socket.Dispose();
                     return null;
                 }
@@ -59,7 +63,11 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                 {
                     // Accept connection request
                     var connectionId = "SSC_" + Guid.NewGuid();
-                    await serializer.SerializeToStreamAsync(new ConnectionResponseMessage(connectionId), writer);
+
+                    await serializer
+                        .SerializeToStreamAsync(new ConnectionResponseMessage(connectionId), writer)
+                        .ContinueOnOtherContext();
+
                     reader.DetachStream();
                     writer.DetachStream();
                     var connection = new StreamSocketConnection(connectionId, socket, serializer);
@@ -74,7 +82,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
             var socket = new StreamSocket();
             var host = new HostName(hostName);
             await socket.ConnectAsync(host, port);
-            return await ConnectAsync(socket, serializer);
+            return await ConnectAsync(socket, serializer).ContinueOnOtherContext();
         }
 
         internal static async Task<StreamSocketConnection> ConnectAsync(StreamSocket socket,
@@ -84,9 +92,13 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
             using (var reader = new DataReader(socket.InputStream))
             using (var writer = new DataWriter(socket.OutputStream))
             {
-                await serializer.SerializeToStreamAsync(new ConnectionRequestMessage(), writer);
+                await serializer
+                    .SerializeToStreamAsync(new ConnectionRequestMessage(), writer)
+                    .ContinueOnOtherContext();
 
-                var response = await serializer.DeserializeFromStreamAsync(reader, CancellationToken.None);
+                var response = await serializer
+                    .DeserializeFromStreamAsync(reader, CancellationToken.None)
+                    .ContinueOnOtherContext();
 
                 if (response is ConnectionResponseMessage connectionResponse && connectionResponse.IsSuccessful)
                 {
@@ -113,7 +125,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                 Message = message
             };
 
-            await _serializer.SerializeToStreamAsync(request, _writer);
+            await _serializer.SerializeToStreamAsync(request, _writer).ContinueOnOtherContext();
 
             if (options.IsResponseRequired)
             {
@@ -123,7 +135,10 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
 
                 try
                 {
-                    var response = await responseTask.Task.TimeoutAfter(options.ResponseTimeout);
+                    var response = await responseTask.Task
+                        .TimeoutAfter(options.ResponseTimeout)
+                        .ContinueOnOtherContext();
+
                     return new RequestResult(response, RequestStatus.Success);
                 }
                 catch (TimeoutException)
@@ -144,7 +159,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
 
         internal async Task<RespondResult> SendResponseAsync(int requestId, object message)
         {
-            using (await _mutex.LockAsync())
+            using (await _mutex.LockAsync().ContinueOnOtherContext())
             {
                 if (_status == ConnectionStatus.Disposed)
                     return new RespondResult(ResponseStatus.Failure);
@@ -155,7 +170,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                     Message = message
                 };
 
-                await _serializer.SerializeToStreamAsync(response, _writer);
+                await _serializer.SerializeToStreamAsync(response, _writer).ContinueOnOtherContext();
                 return new RespondResult(ResponseStatus.Success);
             }
         }
@@ -165,12 +180,15 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
             _disconnectReason = DisconnectReason.LocalPeerDisconnected;
 
             // Inform peer that we are closing the connection
-            await _serializer.SerializeToStreamAsync(StreamSocketConnectionCloseMessage.Instance, _writer);
+            await _serializer
+                .SerializeToStreamAsync(StreamSocketConnectionCloseMessage.Instance, _writer)
+                .ContinueOnOtherContext();
+
             await Task.Delay(200); // Give peer some time to read the message
 
             // Stop receiver task
             _receiverTaskCancellationTokenSource.Cancel();
-            await _receiverTask;
+            await _receiverTask.ContinueOnOtherContext();
         }
 
         protected override void DisposeCore()
@@ -188,14 +206,15 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                 try
                 {
                     // Receive next message
-                    var o = await _serializer.DeserializeFromStreamAsync(_reader,
-                        _receiverTaskCancellationTokenSource.Token);
+                    var o = await _serializer
+                        .DeserializeFromStreamAsync(_reader, _receiverTaskCancellationTokenSource.Token)
+                        .ContinueOnOtherContext();
 
                     if (o is StreamSocketConnectionCloseMessage connectionCloseMessage)
                     {
                         // Peer informs us that he closes the connection now
                         _disconnectReason = DisconnectReason.RemotePeerDisconnected;
-                        await DisposeAsync();
+                        await DisposeAsync().ContinueOnOtherContext();
                         break; // stop receiving
                     }
                     else
@@ -208,7 +227,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                 {
                     // Socket closed, peer disconnected unexpectedly
                     _disconnectReason = DisconnectReason.UnexpectedDisconnect;
-                    await DisposeAsync();
+                    await DisposeAsync().ContinueOnOtherContext();
                     break;
                 }
                 catch
@@ -223,7 +242,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                     }
                     else
                     {
-                        await DisposeAsync();
+                        await DisposeAsync().ContinueOnOtherContext();
                     }
                     break;
                 }
@@ -237,11 +256,11 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                     case StreamSocketRequestMessage requestMessage:
                         var request = new StreamSocketRequest(requestMessage.RequestId, requestMessage.Message, this);
                         _requestReceived.OnNext(request);
-                        await request.WaitForDeferralsAsync();
+                        await request.WaitForDeferralsAsync().ContinueOnOtherContext();
 
                         // if no one responded to the message, respond with an empty message now
                         if (!request.HasResponded)
-                            await request.SendResponseAsync(null);
+                            await request.SendResponseAsync(null).ContinueOnOtherContext();
 
                         break;
 

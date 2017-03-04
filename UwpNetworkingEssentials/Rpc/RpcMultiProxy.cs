@@ -2,20 +2,20 @@
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
+using UwpNetworkingEssentials.Channels;
 
 namespace UwpNetworkingEssentials.Rpc
 {
     /// <summary>
-    /// A dynamic proxy that issues remote procedure calls
-    /// for a group of clients.
+    /// A dynamic proxy that issues remote procedure calls for a group of connections.
     /// </summary>
-    internal class RpcMultiProxy : DynamicObject, IRpcProxy
+    internal class RpcMultiProxy : DynamicObject
     {
-        private readonly RpcProxy[] _proxies;
+        private readonly IReadOnlyList<IConnection> _connections;
 
-        public RpcMultiProxy(IEnumerable<RpcProxy> proxies)
+        public RpcMultiProxy(IEnumerable<IConnection> connections)
         {
-            _proxies = proxies.ToArray();
+            _connections = connections.ToList();
         }
 
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
@@ -27,7 +27,8 @@ namespace UwpNetworkingEssentials.Rpc
 
         internal async Task<object[]> CallMethodAsync(RpcCall call)
         {
-            var results = await Task.WhenAll(_proxies.Select(proxy => proxy.CallMethodAsync(call)));
+            var tasks = _connections.Select(connection => RpcHelper.CallMethodAsync(connection, call));
+            var results = await Task.WhenAll(tasks);
             return results;
         }
     }

@@ -22,7 +22,10 @@ namespace UwpNetworkingEssentials.Channels.AppServices
 
         protected override async Task<RespondResult> SendResponseCoreAsync(object message)
         {
-            var result = await _internalRequest.SendResponseAsync(message, _connection._serializer);
+            var result = await _internalRequest
+                .SendResponseAsync(message, _connection._serializer)
+                .ContinueOnOtherContext();
+
             _internalRequestDeferral.Complete();
             return result;
         }

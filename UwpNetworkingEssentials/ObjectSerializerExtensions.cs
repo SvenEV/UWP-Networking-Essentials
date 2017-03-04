@@ -35,9 +35,9 @@ namespace UwpNetworkingEssentials
         public static async Task<object> DeserializeFromStreamAsync(this IObjectSerializer serializer,
             DataReader reader, CancellationToken cancellationToken)
         {
-            await reader.LoadAsync(sizeof(uint)).AsTask(cancellationToken);
+            await reader.LoadAsync(sizeof(uint)).AsTask(cancellationToken).ContinueOnOtherContext();
             var totalLength = reader.ReadUInt32();
-            await reader.LoadAsync(totalLength).AsTask(cancellationToken);
+            await reader.LoadAsync(totalLength).AsTask(cancellationToken).ContinueOnOtherContext();
 
             var data = reader.ReadString(totalLength);
             var value = serializer.Deserialize(data);

@@ -45,7 +45,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
                     break;
             }
 
-            await DisposeAsync(); // TODO: Potentially dangerous 'await' in 'async void' method
+            await DisposeAsync().ContinueOnOtherContext(); // TODO: Potentially dangerous 'await' in 'async void' method
         }
 
         private async void OnRequestReceived(AppServiceConnection sender, AppServiceRequestReceivedEventArgs args)
@@ -69,7 +69,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
 
             var gotRequest = new SemaphoreSlim(0);
             e.AppServiceConnection.RequestReceived += OnRequestReceived;
-            await gotRequest.WaitAsync();
+            await gotRequest.WaitAsync().ContinueOnOtherContext();
             e.AppServiceConnection.RequestReceived -= OnRequestReceived;
 
             var message = serializer.DeserializeFromValueSet(request.Message);
@@ -136,7 +136,10 @@ namespace UwpNetworkingEssentials.Channels.AppServices
 
             // Send connection request, receive connection response
             var request = new ConnectionRequestMessage();
-            var response = await connection.SendMessageAsync(request, RequestOptions.Default, serializer);
+
+            var response = await connection
+                .SendMessageAsync(request, RequestOptions.Default, serializer)
+                .ContinueOnOtherContext();
 
             var success =
                 response.Status == RequestStatus.Success &&
@@ -165,7 +168,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
 
         protected override async Task<RequestResult> SendMessageCoreAsync(object message, RequestOptions options)
         {
-            return await _internalConnection.SendMessageAsync(message, options, _serializer);
+            return await _internalConnection.SendMessageAsync(message, options, _serializer).ContinueOnOtherContext();
         }
 
         protected override void DisposeCore()
