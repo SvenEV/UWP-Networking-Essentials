@@ -15,6 +15,7 @@ namespace UwpNetworkingEssentials.Rpc
             : base(connection, callTarget, beforeRaiseEvent)
         {
             Proxy = TypedRpcProxy.Create<T>(connection);
+            _initialization.Set(); // start handling incoming calls
         }
     }
 }

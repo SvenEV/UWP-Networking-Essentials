@@ -53,11 +53,11 @@ namespace UwpNetworkingEssentials.Channels.AppServices
             var request = new ASRequest(args.Request, args.GetDeferral(), this);
 
             _requestReceived.OnNext(request);
-            await request.WaitForDeferralsAsync();
+            await request.WaitForDeferralsAsync().ContinueOnOtherContext();
 
             // if no one responded to the message, respond with an empty message now
             if (!request.HasResponded)
-                await request.SendResponseAsync(null);
+                await request.SendResponseAsync(null).ContinueOnOtherContext();
         }
 
         public static async Task<ASConnection> AcceptConnectionAsync(AppServiceTriggerDetails e,
@@ -79,7 +79,9 @@ namespace UwpNetworkingEssentials.Channels.AppServices
                 // Accept connection request
                 var connectionId = "AS_" + Guid.NewGuid();
                 var connectionResponse = new ConnectionResponseMessage(connectionId);
-                await request.SendResponseAsync(serializer.SerializeToValueSet(connectionResponse));
+                await request
+                    .SendResponseAsync(serializer.SerializeToValueSet(connectionResponse))
+                    .ContinueOnOtherContext();
                 deferral.Complete();
                 return new ASConnection(
                     connectionId, e.AppServiceConnection, connectionDeferral,
@@ -89,7 +91,9 @@ namespace UwpNetworkingEssentials.Channels.AppServices
             {
                 // Wrong message received => reject connection
                 var connectionResponse = new ConnectionResponseMessage(null);
-                await request.SendResponseAsync(serializer.SerializeToValueSet(connectionResponse));
+                await request
+                    .SendResponseAsync(serializer.SerializeToValueSet(connectionResponse))
+                    .ContinueOnOtherContext();
                 deferral.Complete();
                 connectionDeferral.Complete();
                 e.AppServiceConnection.Dispose();
@@ -128,8 +132,12 @@ namespace UwpNetworkingEssentials.Channels.AppServices
             var isRemoteSystemConnection = (remoteSystem != null);
 
             var connectStatus = isRemoteSystemConnection
-                ? await connection.OpenRemoteAsync(new RemoteSystemConnectionRequest(remoteSystem))
-                : await connection.OpenAsync();
+                ? await connection
+                    .OpenRemoteAsync(new RemoteSystemConnectionRequest(remoteSystem))
+                    .ContinueOnOtherContext()
+                : await connection
+                    .OpenAsync()
+                    .ContinueOnOtherContext();
 
             if (connectStatus != AppServiceConnectionStatus.Success)
                 return new ASConnectionConnectResult(connectStatus, AppServiceHandshakeStatus.Unknown, null);

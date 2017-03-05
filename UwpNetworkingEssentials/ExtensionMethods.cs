@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Windows.Foundation;
 
 namespace UwpNetworkingEssentials
 {
@@ -27,6 +28,14 @@ namespace UwpNetworkingEssentials
             else
                 throw new TimeoutException();
         }
+
+        public static bool IsTaskTypeWithResult(this Type type)
+        {
+            return typeof(Task).IsAssignableFrom(type) &&
+                type.GetTypeInfo().IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(Task<>) &&
+                type.GetGenericArguments()[0].Name != "VoidTaskResult";
+        }
     }
 }
 
@@ -42,5 +51,11 @@ namespace System.Threading.Tasks
 
         public static ConfiguredTaskAwaitable<T> ContinueOnOtherContext<T>(this AwaitableDisposable<T> task)
             where T : IDisposable => task.ConfigureAwait(false);
+
+        public static ConfiguredTaskAwaitable<T> ContinueOnOtherContext<T>(this IAsyncOperation<T> operation) =>
+            operation.AsTask().ConfigureAwait(false);
+
+        public static ConfiguredTaskAwaitable ContinueOnOtherContext(this IAsyncAction action) =>
+            action.AsTask().ConfigureAwait(false);
     }
 }

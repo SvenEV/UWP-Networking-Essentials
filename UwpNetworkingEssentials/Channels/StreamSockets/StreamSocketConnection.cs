@@ -81,7 +81,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
         {
             var socket = new StreamSocket();
             var host = new HostName(hostName);
-            await socket.ConnectAsync(host, port);
+            await socket.ConnectAsync(host, port).ContinueOnOtherContext();
             return await ConnectAsync(socket, serializer).ContinueOnOtherContext();
         }
 
@@ -184,7 +184,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
                 .SerializeToStreamAsync(StreamSocketConnectionCloseMessage.Instance, _writer)
                 .ContinueOnOtherContext();
 
-            await Task.Delay(200); // Give peer some time to read the message
+            await Task.Delay(200).ContinueOnOtherContext(); // Give peer some time to read the message
 
             // Stop receiver task
             _receiverTaskCancellationTokenSource.Cancel();

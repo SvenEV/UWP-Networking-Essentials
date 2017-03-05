@@ -41,7 +41,7 @@ namespace UwpNetworkingEssentials.Channels.StreamSockets
 
         protected override async Task StartCoreAsync()
         {
-            await _listener.BindServiceNameAsync(Port);
+            await _listener.BindServiceNameAsync(Port).ContinueOnOtherContext();
         }
 
         protected override Task DisposeCoreAsync()

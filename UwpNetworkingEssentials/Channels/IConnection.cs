@@ -1,6 +1,5 @@
 ﻿using Nito.AsyncEx;
 using System;
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 
@@ -14,7 +13,7 @@ namespace UwpNetworkingEssentials.Channels
         string Id { get; }
 
         /// <summary>
-        /// The event that is raised when an object is received.
+        /// The event that is raised when a request is received.
         /// </summary>
         IObservable<IRequest> RequestReceived { get; }
 

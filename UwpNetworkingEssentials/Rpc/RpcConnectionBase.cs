@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using System;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using UwpNetworkingEssentials.Channels;
@@ -8,8 +9,9 @@ namespace UwpNetworkingEssentials.Rpc
 {
     public abstract class RpcConnectionBase
     {
-        private readonly IDisposable _requestReceivedSubscription;
-        private readonly IDisposable _disconnectedSubscription;
+        protected readonly AsyncManualResetEvent _initialization = new AsyncManualResetEvent();
+        private IDisposable _requestReceivedSubscription;
+        private IDisposable _disconnectedSubscription;
 
         internal event TypedEventHandler<RpcConnectionBase, DisconnectEventArgs> Disconnected;
 
@@ -31,12 +33,21 @@ namespace UwpNetworkingEssentials.Rpc
 
             _requestReceivedSubscription = connection.RequestReceived
                 .Where(r => r.Message is RpcCall)
-                .Subscribe(r => RpcHelper.HandleMethodCall(this, r));
+                .Subscribe(OnCallReceived);
 
             _disconnectedSubscription = connection.Disconnected.Subscribe(OnDisconnected);
 
             beforeRaiseEvent?.Invoke(this);
             (callTarget as IRpcTarget)?.OnConnected(this);
+        }
+
+        private async void OnCallReceived(IRequest request)
+        {
+            using (request.GetDeferral())
+            {
+                await _initialization.WaitAsync(); // wait for constructor to be fully executed
+                await RpcHelper.HandleMethodCall(this, request);
+            }
         }
 
         private void OnDisconnected(DisconnectEventArgs args)

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Windows.ApplicationModel.AppService;
 using Windows.Foundation.Collections;
 
@@ -11,7 +10,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
             RequestOptions options, IObjectSerializer serializer)
         {
             var valueSet = serializer.SerializeToValueSet(message);
-            var internalResponse = await connection.SendMessageAsync(valueSet);
+            var internalResponse = await connection.SendMessageAsync(valueSet).ContinueOnOtherContext();
             var success = internalResponse.Status == AppServiceResponseStatus.Success;
 
             var responseMessage = (success && options.IsResponseRequired)
@@ -28,7 +27,7 @@ namespace UwpNetworkingEssentials.Channels.AppServices
             IObjectSerializer serializer)
         {
             var valueSet = serializer.SerializeToValueSet(message);
-            var internalStatus = await request.SendResponseAsync(valueSet);
+            var internalStatus = await request.SendResponseAsync(valueSet).ContinueOnOtherContext();
             var success = internalStatus == AppServiceResponseStatus.Success;
             return new RespondResult(success ? ResponseStatus.Success : ResponseStatus.Failure, internalStatus);
         }

@@ -43,9 +43,7 @@ namespace UwpNetworkingEssentials.Rpc
             {
                 // asynchronous execution
 
-                if (returnType.GetTypeInfo().IsGenericType &&
-                    returnType.GetGenericTypeDefinition() == typeof(Task<>) &&
-                    returnType.GetGenericArguments()[0].Name != "VoidTaskResult")
+                if (returnType.IsTaskTypeWithResult())
                 {
                     // Task<TResult>
                     var resultType = returnType.GenericTypeArguments[0];
@@ -61,7 +59,9 @@ namespace UwpNetworkingEssentials.Rpc
                     }
                     else
                     {
-                        var tasks = _connections.Select(conn => RpcHelper.CallMethodAsync(conn, call)).Cast<Task>();
+                        var tasks = _connections
+                            .Select(conn => RpcHelper.CallMethodAsync(conn, call))
+                            .Cast<Task>();
 
                         // braces are required for correct execution by the DLR, do not remove
                         Task.WhenAll(tasks).ContinueWith(task => { tcs.SetResult(Default(resultType)); });

@@ -46,7 +46,7 @@ namespace UwpNetworkingEssentials.Rpc
         /// <param name="connection"></param>
         /// <param name="rpcCallRequest"></param>
         /// <param name="rpcTarget"></param>
-        public static async void HandleMethodCall(RpcConnectionBase connection, IRequest rpcCallRequest)
+        public static async Task HandleMethodCall(RpcConnectionBase connection, IRequest rpcCallRequest)
         {
             using (var deferral = rpcCallRequest.GetDeferral())
             {
@@ -54,17 +54,21 @@ namespace UwpNetworkingEssentials.Rpc
                 {
                     if (connection.CallTarget == null)
                     {
-                        await rpcCallRequest.SendResponseAsync(
-                            RpcReturn.Faulted("No remote procedure calls are allowed on this connection"));
+                        await rpcCallRequest
+                            .SendResponseAsync(
+                                RpcReturn.Faulted("No remote procedure calls are allowed on this connection"))
+                            .ContinueOnOtherContext();
                     }
-
-                    var call = (RpcCall)rpcCallRequest.Message;
-                    var result = await InvokeMethodAsync(connection, call);
-                    await rpcCallRequest.SendResponseAsync(result);
+                    else
+                    {
+                        var call = (RpcCall)rpcCallRequest.Message;
+                        var result = await InvokeMethodAsync(connection, call).ContinueOnOtherContext();
+                        await rpcCallRequest.SendResponseAsync(result).ContinueOnOtherContext();
+                    }
                 }
                 catch
                 {
-                    await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("Unknown error"));
+                    await rpcCallRequest.SendResponseAsync(RpcReturn.Faulted("Unknown error")).ContinueOnOtherContext();
                 }
             }
         }
@@ -127,10 +131,9 @@ namespace UwpNetworkingEssentials.Rpc
 
                 if (returnValue is Task)
                 {
-                    await (Task)returnValue;
+                    await ((Task)returnValue).ContinueOnOtherContext();
 
-                    if (returnValue.GetType().GetGenericTypeDefinition() == typeof(Task<>) &&
-                        returnValue.GetType().GetGenericArguments()[0].Name != "VoidTaskResult")
+                    if (returnValue.GetType().IsTaskTypeWithResult())
                         returnValue = ((dynamic)returnValue).Result;
                     else
                         returnValue = null;
